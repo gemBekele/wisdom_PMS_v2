@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800;
+  }
+}
+
+@layer components {
+  .card-corporate {
+    @apply bg-white border border-primary-100;
+  }
+  .text-corporate {
+    @apply text-slate-800;
+  }
+  .text-corporate-muted {
+    @apply text-slate-500;
+  }
+
+  /* Tables on tablet/desktop: fit the screen, no forced width. Scroll only when a table is genuinely wider than its container (rare), sticky first column then applies. */
+  .table-scroll {
+    @apply overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .table-scroll table {
+    @apply w-full text-sm;
+  }
+  .table-scroll th,
+  .table-scroll td {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .table-scroll th:first-child,
+  .table-scroll td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: #fff;
+    box-shadow: 4px 0 8px -6px rgba(0, 0, 0, 0.15);
+  }
+  .table-scroll thead th:first-child {
+    background-color: #f8fafc;
+    z-index: 2;
+  }
+
+  /* Stat cards (grids of summary cards at top of pages): long money/ratio values must never overflow the card on phones — allow the value to wrap and shrink on small screens. Covers icon+text flex cards, direct value divs, and NPL ratio cards. */
+  .grid [class~="flex"][class~="items-center"] > * {
+    min-width: 0;
+  }
+  .grid .text-xl.font-bold,
+  .grid .text-2xl.font-bold,
+  .grid .text-3xl.font-bold {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  @media (max-width: 640px) {
+    .grid .text-xl.font-bold {
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+    .grid .text-2xl.font-bold {
+      font-size: 1.15rem;
+      line-height: 1.2;
+    }
+    .grid .text-3xl.font-bold {
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+  }
+}
