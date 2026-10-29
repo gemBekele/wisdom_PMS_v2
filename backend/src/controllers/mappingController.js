@@ -17,32 +17,32 @@ const toISODate = (val) => {
 // @access  Private
 export const getMappings = asyncHandler(async (req, res) => {
   const { branchId, mappedTo, status, accountNumber } = req.query;
-
+  const role = req.user.role;
   const where = {};
 
-  if (req.user.role === 'staff') {
+  if (role === 'staff') {
     where.mappedToId = req.user.id;
-  } else if (req.user.role === 'supervisor') {
+  } else if (role === 'supervisor') {
     const supervisedStaff = await prisma.user.findMany({
       where: { supervisorId: req.user.id, isActive: true },
       select: { id: true },
     });
     const staffIds = supervisedStaff.map(s => s.id);
-    if (staffIds.length > 0) {
-      where.OR = [
-        { mappedToId: { in: staffIds } },
-        { mappedToId: req.user.id },
-      ];
-    } else {
-      where.mappedToId = req.user.id;
-    }
-  } else if (branchId) {
-    where.branchId = branchId;
-  } else if (req.user.branchId) {
+    where.OR = staffIds.length > 0
+      ? [{ mappedToId: { in: staffIds } }, { mappedToId: req.user.id }]
+      : [{ mappedToId: req.user.id }];
+  } else if (role === 'branchManager') {
     where.branchId = req.user.branchId;
+  } else if (role === 'areaManager') {
+    where.branch = { areaId: req.user.areaId };
+  } else if (role === 'admin' && branchId) {
+    where.branchId = branchId;
   }
 
-  if (mappedTo) where.mappedToId = mappedTo;
+  // Only managers/admins may narrow by assignee; staff/supervisors stay within their scope.
+  if (['admin', 'areaManager', 'branchManager', 'supervisor'].includes(role) && mappedTo) {
+    where.mappedToId = mappedTo;
+  }
   if (status) {
     where.status = status === 'Unmapped' ? 'Inactive' : status;
   }
@@ -57,6 +57,7 @@ export const getMappings = asyncHandler(async (req, res) => {
       branch: { select: { id: true, name: true, code: true } },
     },
     orderBy: { createdAt: 'desc' },
+    take: 1000,
   });
 
   res.status(200).json({
@@ -75,31 +76,80 @@ export const getMappings = asyncHandler(async (req, res) => {
 // @route   POST /api/mappings
 // @access  Private (Branch Manager, HQ Admin)
 export const createMapping = asyncHandler(async (req, res) => {
-  const accountType = ACCOUNT_TYPE_TO_ENUM[req.body.accountType] || req.body.accountType;
+  const role = req.user.role;
+  const branchId = role === 'admin' ? (req.body.branchId || req.user.branchId) : req.user.branchId;
+
+  if (!branchId) {
+    return res.status(400).json({ success: false, message: 'Branch is required' });
+  }
+
+  const accountNumber = String(req.body.accountNumber || '').trim();
+  const customerName = String(req.body.customerName || '').trim();
+  if (!accountNumber || !customerName) {
+    return res.status(400).json({ success: false, message: 'accountNumber and customerName are required' });
+  }
+
+  const accountType = ACCOUNT_TYPE_TO_ENUM[req.body.accountType] || req.body.accountType || 'Savings';
+  if (!['Savings', 'Current', 'Fixed_Deposit', 'Recurring_Deposit', 'Loan'].includes(accountType)) {
+    return res.status(400).json({ success: false, message: 'Invalid account type' });
+  }
+
+  const status = req.body.status || 'Active';
+  if (!['Active', 'Inactive', 'Transferred'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid account status' });
+  }
+
+  const numbers = {};
+  for (const field of ['balance', 'june_balance', 'current_balance', 'loan_principal', 'interest_rate']) {
+    const raw = req.body[field];
+    const value = raw === undefined || raw === null || raw === '' ? 0 : Number(raw);
+    if (!Number.isFinite(value) || value < 0) {
+      return res.status(400).json({ success: false, message: `${field} must be a non-negative number` });
+    }
+    numbers[field] = value;
+  }
+
+  const mappedToId = req.body.mappedTo || req.body.mappedToId || null;
+  if (mappedToId) {
+    const assignee = await prisma.user.findUnique({
+      where: { id: mappedToId },
+      select: { id: true, branchId: true, isActive: true },
+    });
+    if (!assignee || !assignee.isActive) {
+      return res.status(400).json({ success: false, message: 'Assigned user not found or inactive' });
+    }
+    if (role !== 'admin' && assignee.branchId !== branchId) {
+      return res.status(400).json({ success: false, message: 'Assigned user must belong to the same branch' });
+    }
+  }
+
   const paymentFreq = req.body.payment_frequency || req.body.paymentFrequency || null;
+  const paymentFrequency = paymentFreq ? (PAYMENT_FREQUENCY_MAP[paymentFreq] || paymentFreq) : null;
+  if (paymentFrequency && !['Daily', 'Weekly', 'Monthly'].includes(paymentFrequency)) {
+    return res.status(400).json({ success: false, message: 'Invalid payment frequency' });
+  }
 
   const mapping = await prisma.accountMapping.create({
     data: {
-      accountNumber: req.body.accountNumber,
-      customerName: req.body.customerName,
-      accountType: accountType || 'Savings',
+      accountNumber,
+      customerName,
+      accountType,
       product: req.body.product || null,
-      balance: parseFloat(req.body.balance || 0),
-      june_balance: parseFloat(req.body.june_balance || 0),
-      current_balance: parseFloat(req.body.current_balance || req.body.balance || 0),
+      balance: numbers.balance,
+      june_balance: numbers.june_balance,
+      current_balance: req.body.current_balance !== undefined ? numbers.current_balance : numbers.balance,
       phoneNumber: req.body.phoneNumber || null,
       notes: req.body.notes || null,
-      status: req.body.status || 'Active',
-      mappedToId: req.body.mappedTo || req.body.mappedToId,
+      status,
+      mappedToId,
       mappedById: req.user.id,
-      branchId: req.body.branchId || req.user.branchId,
-      // Loan-specific fields
-      loan_principal: parseFloat(req.body.loan_principal || req.body.loanPrincipal || 0) || 0,
-      payment_frequency: PAYMENT_FREQUENCY_MAP[paymentFreq] || null,
+      branchId,
+      loan_principal: numbers.loan_principal,
+      payment_frequency: paymentFrequency,
       loan_maturity_date: toISODate(req.body.loan_maturity_date || req.body.maturity_date || req.body.maturityDate),
       loan_disbursement_date: toISODate(req.body.loan_disbursement_date || req.body.disbursement_date),
       next_payment_date: toISODate(req.body.next_payment_date || req.body.nextPaymentDate),
-      interest_rate: parseFloat(req.body.interest_rate || req.body.interestRate || 0) || 0,
+      interest_rate: numbers.interest_rate,
     },
   });
 

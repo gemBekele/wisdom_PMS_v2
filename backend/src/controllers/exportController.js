@@ -5,6 +5,25 @@ export const exportScorecard = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { period, year, month } = req.query;
 
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, areaId: true, branchId: true, branch: { select: { areaId: true } } },
+  });
+  if (!targetUser) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  const actorRole = req.user.role;
+  const canAccess =
+    actorRole === 'admin' ||
+    userId === req.user.id ||
+    (actorRole === 'areaManager' && req.user.areaId && targetUser.areaId === req.user.areaId) ||
+    (['branchManager', 'supervisor'].includes(actorRole) && req.user.branchId && targetUser.branchId === req.user.branchId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to export this scorecard' });
+  }
+
   const where = { userId };
   if (period) where.period = period;
   if (year) where.year = parseInt(year);
@@ -54,6 +73,16 @@ export const exportBranchReport = asyncHandler(async (req, res) => {
 
   if (!branch) {
     return res.status(404).json({ success: false, message: 'Branch not found' });
+  }
+
+  const actorRole = req.user.role;
+  const canAccess =
+    actorRole === 'admin' ||
+    (actorRole === 'areaManager' && req.user.areaId && branch.areaId === req.user.areaId) ||
+    (['branchManager', 'supervisor'].includes(actorRole) && req.user.branchId && branchId === req.user.branchId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to export this branch report' });
   }
 
   const staff = await prisma.user.findMany({

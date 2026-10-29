@@ -395,7 +395,23 @@ export const uploadCBS = asyncHandler(async (req, res) => {
   }
 
   const { branch_code, validationDate } = req.body;
-  const branch = await prisma.branch.findUnique({ where: { code: branch_code || req.user.branch_code } });
+  const role = req.user.role;
+  let branchCode = branch_code || req.user.branch_code;
+
+  if (role !== 'admin') {
+    if (branch_code && branch_code.toUpperCase() !== String(req.user.branch_code || '').toUpperCase()) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(403).json({ success: false, message: 'You can only upload CBS data for your own branch' });
+    }
+    branchCode = req.user.branch_code;
+  }
+
+  if (!branchCode) {
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(400).json({ success: false, message: 'Branch code is required' });
+  }
+
+  const branch = await prisma.branch.findUnique({ where: { code: branchCode } });
 
   if (!branch) {
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -498,8 +514,10 @@ export const uploadCBS = asyncHandler(async (req, res) => {
 export const getCBSValidations = asyncHandler(async (req, res) => {
   const { branchId, status, validationDate } = req.query;
   const where = {};
-  if (branchId) where.branchId = branchId;
-  else if (req.user.branchId && req.user.role !== 'admin') where.branchId = req.user.branchId;
+  const role = req.user.role;
+  if (role === 'admin' && branchId) where.branchId = branchId;
+  else if (role === 'areaManager' && req.user.areaId) where.branch = { areaId: req.user.areaId };
+  else if (req.user.branchId) where.branchId = req.user.branchId;
   if (status) where.status = status;
   if (validationDate) {
     const d = new Date(validationDate);
@@ -573,8 +591,10 @@ export const generateCBSReport = asyncHandler(async (req, res) => {
   const { branchId, startDate, endDate } = req.query;
   const where = {};
 
-  if (branchId) where.branchId = branchId;
-  else if (req.user.branchId && req.user.role !== 'admin') where.branchId = req.user.branchId;
+  const role = req.user.role;
+  if (role === 'admin' && branchId) where.branchId = branchId;
+  else if (role === 'areaManager' && req.user.areaId) where.branch = { areaId: req.user.areaId };
+  else if (req.user.branchId) where.branchId = req.user.branchId;
 
   if (startDate && endDate) {
     where.validationDate = {

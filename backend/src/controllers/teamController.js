@@ -13,14 +13,15 @@ const ensureBranchAccess = async (req, branchId) => {
 
 export const getTeams = asyncHandler(async (req, res) => {
   const { branchId } = req.query;
+  const role = normalizeRole(req.user.role);
   const targetBranchId = branchId || req.user.branchId;
 
-  if (!(await ensureBranchAccess(req, targetBranchId))) {
+  if (role !== 'admin' && !(await ensureBranchAccess(req, targetBranchId))) {
     return res.status(403).json({ success: false, message: 'Not authorized to access this branch' });
   }
 
   const teams = await prisma.team.findMany({
-    where: { branchId: targetBranchId, isActive: true },
+    where: { ...(targetBranchId ? { branchId: targetBranchId } : {}), isActive: true },
     include: {
       manager: { select: { id: true, name: true, email: true, role: true, position: true } },
       members: { select: { id: true, name: true, email: true, position: true } },
@@ -82,6 +83,8 @@ export const createTeam = asyncHandler(async (req, res) => {
       select: { id: true, name: true, teamId: true },
     });
     if (alreadyAssigned.length > 0) {
+      // Do not leave an orphan team behind when member validation fails.
+      await prisma.team.delete({ where: { id: team.id } });
       const names = alreadyAssigned.map(u => u.name).join(', ');
       return res.status(400).json({
         success: false,
@@ -186,6 +189,10 @@ export const deleteTeam = asyncHandler(async (req, res) => {
     return res.status(403).json({ success: false, message: 'Not authorized' });
   }
 
+  await prisma.user.updateMany({
+    where: { teamId: team.id },
+    data: { teamId: null },
+  });
   await prisma.team.update({
     where: { id: req.params.id },
     data: { isActive: false },

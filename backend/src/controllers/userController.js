@@ -176,8 +176,8 @@ export const getHierarchy = asyncHandler(async (req, res) => {
             manager: { select: { id: true, name: true, email: true, role: true, position: true } },
             users: {
               where: { isActive: true, role: 'supervisor' },
-              select: { id: true, name: true, email: true, role: true, position: true, employeeId: true },
-              include: {
+              select: {
+                id: true, name: true, email: true, role: true, position: true, employeeId: true,
                 supervisees: {
                   where: { isActive: true },
                   select: { id: true, name: true, email: true, role: true, position: true, employeeId: true },
@@ -202,8 +202,8 @@ export const getHierarchy = asyncHandler(async (req, res) => {
             manager: { select: { id: true, name: true, email: true, role: true, position: true } },
             users: {
               where: { isActive: true, role: 'supervisor' },
-              select: { id: true, name: true, email: true, role: true, position: true, employeeId: true },
-              include: {
+              select: {
+                id: true, name: true, email: true, role: true, position: true, employeeId: true,
                 supervisees: {
                   where: { isActive: true },
                   select: { id: true, name: true, email: true, role: true, position: true, employeeId: true },

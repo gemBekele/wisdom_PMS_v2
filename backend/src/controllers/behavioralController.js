@@ -24,7 +24,7 @@ const buildBehavioralApprovalChain = async (user) => {
 
   if (user.role === 'staff' || user.role === 'supervisor') {
     const bm = await prisma.user.findFirst({
-      where: { branch_code: user.branch_code, position: 'Branch Manager', isActive: true }
+      where: { branch_code: user.branch_code, position: 'Branch_Manager', isActive: true }
     });
     if (bm) chain.push({ approverId: bm.id, role: 'Branch Manager', status: 'Pending' });
   }

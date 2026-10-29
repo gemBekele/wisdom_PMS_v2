@@ -225,7 +225,7 @@ export function MonthlyScorecard() {
                   },
                 ]}
                 data={behavioralData?.competencies && behavioralData.competencies.length > 0 ? behavioralData.competencies : []}
-                rowKey={(comp: any) => comp.competencyId || comp.competency}
+                rowKey={(comp: any) => comp.competencyId || comp.competency || comp.competencyName || String(comp)}
                 emptyMessage="No behavioral evaluation data available"
               />
             </div>

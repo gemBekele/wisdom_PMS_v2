@@ -8,18 +8,30 @@ import { calculateKPIScore, calculateBranchKPIScore, calculateRating, calculateI
 export const calculatePerformance = asyncHandler(async (req, res) => {
   const { userId, period } = req.body;
   const targetUserId = userId || req.user.id;
-  const branch_code = req.user.branch_code;
 
   if (!period) {
-    return res.status(400).json({
-      success: false,
-      message: 'Period is required',
-    });
+    return res.status(400).json({ success: false, message: 'Period is required' });
   }
 
-  // Determine user role for KPI calculation (BM = branch-level)
-  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
-  const isBranchManager = targetUser?.role === 'branchManager';
+  if (targetUserId !== req.user.id && !['admin', 'areaManager', 'branchManager'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Not authorized to calculate another user\'s score' });
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, role: true, branchId: true, branch_code: true },
+  });
+
+  if (!targetUser) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  const branch_code = targetUser.branch_code || req.user.branch_code;
+  if (!branch_code) {
+    return res.status(400).json({ success: false, message: 'User is not assigned to a branch' });
+  }
+
+  const isBranchManager = targetUser.role === 'branchManager';
 
   let kpiResult;
   if (isBranchManager) {
@@ -33,18 +45,20 @@ export const calculatePerformance = asyncHandler(async (req, res) => {
   let behavioralEval = null;
   if (VALID_EVAL_PERIODS.includes(period)) {
     behavioralEval = await prisma.behavioralEvaluation.findFirst({
-      where: {
-        evaluatedUserId: targetUserId,
-        period,
-        approvalStatus: 'Approved',
-      },
+      where: { evaluatedUserId: targetUserId, period, approvalStatus: 'Approved' },
+      orderBy: { createdAt: 'desc' },
+    });
+  } else {
+    behavioralEval = await prisma.behavioralEvaluation.findFirst({
+      where: { evaluatedUserId: targetUserId, approvalStatus: 'Approved' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   const behavioralScore = behavioralEval?.totalScore || 0;
 
   // Calculate final score
-  const finalScore = kpiResult.kpiTotalScore + behavioralScore;
+  const finalScore = Math.min(100, kpiResult.kpiTotalScore + behavioralScore);
   const ratingEnum = calculateRating(finalScore);
 
   const now = new Date();

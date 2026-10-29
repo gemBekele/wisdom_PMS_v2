@@ -103,7 +103,7 @@ export const importJuneBalance = asyncHandler(async (req, res) => {
       }
     }
 
-    if (make_active) {
+    if (make_active && (results.imported + results.updated) > 0) {
       await prisma.juneBalance.updateMany({
         where: { is_active: true, baseline_period: { not: baseline_period } },
         data: { is_active: false },
@@ -160,6 +160,23 @@ export const getJuneBalance = asyncHandler(async (req, res) => {
       success: false,
       message: 'Baseline balance not found for this account',
     });
+  }
+
+  const accountNumber = juneBalance.accountNumber || juneBalance.account_id;
+  const account = await prisma.accountMapping.findUnique({
+    where: { accountNumber },
+    select: { mappedToId: true, branchId: true, branch: { select: { areaId: true } } },
+  });
+
+  const actorRole = req.user.role;
+  const canAccess =
+    actorRole === 'admin' ||
+    (account && account.mappedToId === req.user.id) ||
+    (account && ['branchManager', 'supervisor'].includes(actorRole) && req.user.branchId && account.branchId === req.user.branchId) ||
+    (account && actorRole === 'areaManager' && req.user.areaId && account.branch?.areaId === req.user.areaId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to view this baseline' });
   }
 
   res.status(200).json({

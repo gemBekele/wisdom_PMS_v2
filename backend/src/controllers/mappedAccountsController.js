@@ -7,11 +7,15 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 export const getUnmappedAccounts = asyncHandler(async (req, res) => {
   const branchCode = req.query.branch_code;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 100;
+  const limit = Math.min(parseInt(req.query.limit) || 100, 500);
   const skip = (page - 1) * limit;
 
   const where = { mappedToId: null };
-  if (branchCode) {
+  if (req.user.role === 'branchManager') {
+    where.branchId = req.user.branchId;
+  } else if (req.user.role === 'areaManager') {
+    where.branch = { areaId: req.user.areaId };
+  } else if (req.user.role === 'admin' && branchCode) {
     where.branch = { code: branchCode.toUpperCase().trim() };
   }
 
@@ -191,7 +195,15 @@ export const getMappedAccountsDashboard = asyncHandler(async (req, res) => {
 // @route   GET /api/mapped-accounts/branch
 // @access  Private (Branch Manager)
 export const getBranchMappedAccounts = asyncHandler(async (req, res) => {
-  const branchId = req.user.branchId;
+  const branchId = req.query.branchId || req.user.branchId;
+
+  if (!branchId) {
+    return res.status(400).json({ success: false, message: 'branchId is required' });
+  }
+
+  if (req.user.role !== 'admin' && branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'You can only view accounts in your own branch' });
+  }
 
   const accounts = await prisma.accountMapping.findMany({
     where: { branchId, status: { not: 'Inactive' } },
@@ -231,6 +243,7 @@ export const getAccountDetail = asyncHandler(async (req, res) => {
     where: { accountNumber: req.params.accountNumber },
     include: {
       mappedTo: { select: { id: true, name: true, employeeId: true } },
+      branch: { select: { areaId: true } },
       dailyTasks: {
         where: { approvalStatus: 'Approved' },
         orderBy: { taskDate: 'desc' },
@@ -242,6 +255,17 @@ export const getAccountDetail = asyncHandler(async (req, res) => {
 
   if (!account) {
     return res.status(404).json({ success: false, message: 'Account not found' });
+  }
+
+  const actorRole = req.user.role;
+  const canAccess =
+    actorRole === 'admin' ||
+    account.mappedToId === req.user.id ||
+    (['branchManager', 'supervisor'].includes(actorRole) && req.user.branchId && account.branchId === req.user.branchId) ||
+    (actorRole === 'areaManager' && req.user.areaId && account.branch?.areaId === req.user.areaId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to view this account' });
   }
 
   res.status(200).json({

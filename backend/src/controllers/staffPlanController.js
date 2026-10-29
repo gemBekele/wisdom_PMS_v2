@@ -21,9 +21,9 @@ export const getStaffPlans = asyncHandler(async (req, res) => {
     where.userId = req.user.id;
   }
 
-  // Apply additional filters
-  if (userId) where.userId = userId;
-  if (branch_code) where.branch_code = branch_code.toUpperCase().trim();
+  // Apply additional filters. Only admins/area managers may widen scope.
+  if (userId && ['admin', 'areaManager'].includes(req.user.role)) where.userId = userId;
+  if (branch_code && ['admin', 'areaManager'].includes(req.user.role)) where.branch_code = branch_code.toUpperCase().trim();
   if (kpi_category) where.kpi_category = KPI_CATEGORY_TO_ENUM[kpi_category] || kpi_category;
   if (period) where.period = period;
   if (branchPlanId) where.branchPlanId = branchPlanId;
@@ -57,6 +57,7 @@ export const getStaffPlan = asyncHandler(async (req, res) => {
     where: { id: req.params.id },
     include: {
       user: { select: { id: true, name: true, position: true, employeeId: true } },
+      branch: { select: { id: true, areaId: true } },
       branchPlan: { select: { id: true, branch_code: true, kpi_category: true, period: true, target_value: true } },
     },
   });
@@ -68,11 +69,12 @@ export const getStaffPlan = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check authorization
+  const role = req.user.role;
   const isAuthorized =
-    req.user.role === 'admin' ||
-    req.user.role === 'branchManager' ||
-    staffPlan.userId === req.user.id;
+    role === 'admin' ||
+    staffPlan.userId === req.user.id ||
+    (role === 'areaManager' && req.user.areaId && staffPlan.branch?.areaId === req.user.areaId) ||
+    (['branchManager', 'supervisor'].includes(role) && req.user.branchId && staffPlan.branchId === req.user.branchId);
 
   if (!isAuthorized) {
     return res.status(403).json({

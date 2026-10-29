@@ -230,7 +230,7 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
       }
 
       // Calculate percentage and score
-      const percent = individual_target > 0 ? (actualGrowth / individual_target) * 100 : 0;
+      const percent = individual_target > 0 ? Math.min(100, (actualGrowth / individual_target) * 100) : 0;
 
       const weight = weights[kpi_category] || 0;
       const categoryScore = (percent / 100) * weight;
@@ -260,7 +260,7 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
       if (kpiScores[kpi]) continue; // Already handled above
 
       const weight = weights[kpi] || 0;
-      const percent = achievement.totalTarget > 0 ? (achievement.totalActual / achievement.totalTarget) * 100 : 0;
+      const percent = achievement.totalTarget > 0 ? Math.min(100, (achievement.totalActual / achievement.totalTarget) * 100) : 0;
       const categoryScore = (percent / 100) * weight;
 
       kpiScores[kpi] = {
@@ -363,7 +363,7 @@ export const calculateBranchKPIScore = async (branch_code, period) => {
         }
       }
 
-      const percent = target_value > 0 ? (actualGrowth / target_value) * 100 : 0;
+      const percent = target_value > 0 ? Math.min(100, (actualGrowth / target_value) * 100) : 0;
       const weight = weights[kpi_category] || 0;
       const categoryScore = (percent / 100) * weight;
 
@@ -378,7 +378,7 @@ export const calculateBranchKPIScore = async (branch_code, period) => {
       totalScorePoints += categoryScore;
     }
 
-    const kpiTotalScore = (totalScorePoints / 100) * 85;
+    const kpiTotalScore = Math.min(85, (totalScorePoints / 100) * 85);
 
     return {
       kpiScores,
@@ -610,24 +610,26 @@ export const calculateStaffCollectionRate = async (userId, date) => {
 
     const accountIds = loanAccounts.map(a => a.id);
 
-    const todayInstallments = await prisma.loanSchedule.findMany({
+    // Collection rate covers every installment that has fallen due up to the
+    // query date (overdue + today), not just the ones due exactly today.
+    const dueInstallments = await prisma.loanSchedule.findMany({
       where: {
         accountId: { in: accountIds },
-        expectedDate: { gte: dayStart, lt: dayEnd },
+        expectedDate: { lt: dayEnd },
       },
     });
 
-    if (todayInstallments.length === 0) return { expected: 0, paid: 0, percent: 0, count: 0, paidCount: 0 };
+    if (dueInstallments.length === 0) return { expected: 0, paid: 0, percent: 0, count: 0, paidCount: 0 };
 
-    const totalExpected = todayInstallments.reduce((s, i) => s + i.expectedAmount, 0);
-    const totalPaid = todayInstallments.reduce((s, i) => s + i.paidAmount, 0);
-    const paidCount = todayInstallments.filter(i => i.status === 'Paid' || i.status === 'Partial').length;
+    const totalExpected = dueInstallments.reduce((s, i) => s + i.expectedAmount, 0);
+    const totalPaid = dueInstallments.reduce((s, i) => s + i.paidAmount, 0);
+    const paidCount = dueInstallments.filter(i => i.status === 'Paid' || i.status === 'Partial').length;
 
     return {
       expected: totalExpected,
       paid: totalPaid,
       percent: totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100 * 100) / 100 : 0,
-      count: todayInstallments.length,
+      count: dueInstallments.length,
       paidCount,
     };
   } catch (error) {

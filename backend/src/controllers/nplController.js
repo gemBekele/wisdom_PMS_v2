@@ -400,12 +400,16 @@ export const getLoanSchedule = asyncHandler(async (req, res) => {
     select: {
       accountNumber: true, customerName: true, accountType: true,
       loan_principal: true, payment_frequency: true, loan_disbursement_date: true,
-      loan_maturity_date: true, interest_rate: true, current_balance: true,
+      loan_maturity_date: true, interest_rate: true, current_balance: true, branchId: true,
     },
   });
 
   if (!account) {
     return res.status(404).json({ success: false, message: 'Account not found' });
+  }
+
+  if (req.user.role !== 'admin' && req.user.branchId && account.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Loan account is outside your branch' });
   }
 
   const schedules = await prisma.loanSchedule.findMany({
@@ -430,6 +434,16 @@ export const getLoanSchedule = asyncHandler(async (req, res) => {
 // @route   POST /api/npl/schedules/:accountId/generate
 export const generateLoanSchedules = asyncHandler(async (req, res) => {
   const { accountId } = req.params;
+  const account = await prisma.accountMapping.findUnique({
+    where: { id: accountId },
+    select: { branchId: true },
+  });
+  if (!account) {
+    return res.status(404).json({ success: false, message: 'Account not found' });
+  }
+  if (req.user.role !== 'admin' && req.user.branchId && account.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Loan account is outside your branch' });
+  }
   const result = await autoGenerateLoanSchedules(accountId);
   res.status(200).json({ success: true, data: result });
 });

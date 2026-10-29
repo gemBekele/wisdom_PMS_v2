@@ -38,6 +38,12 @@ const storage = multer.diskStorage({
 });
 
 // File filter
+const uploadError = (message) => {
+  const error = new Error(message);
+  error.statusCode = 400;
+  return error;
+};
+
 const fileFilter = (req, file, cb) => {
   const spreadsheetMimes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -55,7 +61,7 @@ const fileFilter = (req, file, cb) => {
     if (spreadsheetExts.includes(ext) && spreadsheetMimes.includes(file.mimetype)) {
       return cb(null, true);
     }
-    return cb(new Error('Invalid file type. Upload a CSV or Excel file.'), false);
+    return cb(uploadError('Invalid file type. Upload a CSV or Excel file.'), false);
   }
 
   const allowedMimes = {
@@ -64,7 +70,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedMimes[file.fieldname]?.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type'), false);
+    cb(uploadError('Invalid file type'), false);
   }
 };
 

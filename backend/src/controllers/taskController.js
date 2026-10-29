@@ -113,6 +113,29 @@ export const createTask = asyncHandler(async (req, res) => {
     });
   }
 
+  if (!req.user.branchId) {
+    return res.status(400).json({ success: false, message: 'Your user is not assigned to a branch' });
+  }
+
+  const validTaskTypes = new Set(Object.values(TASK_TYPE_TO_ENUM));
+  const normalizedTaskType = TASK_TYPE_TO_ENUM[taskType] || taskType;
+  if (!taskType || !validTaskTypes.has(normalizedTaskType)) {
+    return res.status(400).json({ success: false, message: 'Invalid task type' });
+  }
+
+  const numericAmount = amount === undefined || amount === null || amount === '' ? 0 : Number(amount);
+  if (!Number.isFinite(numericAmount) || numericAmount < 0) {
+    return res.status(400).json({ success: false, message: 'Amount must be a non-negative number' });
+  }
+
+  let parsedTaskDate = new Date();
+  if (taskDate) {
+    parsedTaskDate = new Date(taskDate);
+    if (Number.isNaN(parsedTaskDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Invalid task date' });
+    }
+  }
+
   let accountMappingId = null;
   let mappingStatus = 'Unmapped';
   let canCountForKPI = false;
@@ -149,14 +172,14 @@ export const createTask = asyncHandler(async (req, res) => {
   const approvalChainData = await buildApprovalChain(req.user);
 
   const taskData = {
-    taskType: TASK_TYPE_TO_ENUM[taskType] || taskType,
+    taskType: normalizedTaskType,
     accountNumber: accountNumber || `TASK-${Date.now()}`,
     accountId: accountMappingId,
-    amount: amount || 0,
+    amount: numericAmount,
     submittedById: req.user.id,
     branchId: req.user.branchId,
     mappingStatus: MAPPING_STATUS_TO_ENUM[mappingStatus],
-    taskDate: taskDate ? new Date(taskDate) : new Date(),
+    taskDate: parsedTaskDate,
     approvalStatus: 'Pending',
   };
   if (productType) taskData.productType = productType;
