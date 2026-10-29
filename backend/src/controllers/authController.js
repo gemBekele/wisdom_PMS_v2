@@ -84,7 +84,7 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  const token = generateToken(user.id);
+  const token = generateToken(user.id, user.tokenVersion);
 
   await logAudit(
     user.id,
@@ -197,7 +197,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
 
   await prisma.user.update({
     where: { id: req.user.id },
-    data: { password: hashedPassword },
+    data: { password: hashedPassword, tokenVersion: { increment: 1 } },
   });
 
   await logAudit(

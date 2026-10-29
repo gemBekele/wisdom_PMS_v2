@@ -125,7 +125,7 @@ export const uploadPlan = asyncHandler(async (req, res) => {
   }
 
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(fs.readFileSync(req.file.path), { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     let data = XLSX.utils.sheet_to_json(worksheet, {
@@ -318,6 +318,7 @@ export const getPlan = asyncHandler(async (req, res) => {
     where: { id: req.params.id },
     include: {
       createdBy: { select: { id: true, name: true, email: true } },
+      branch: { select: { id: true, areaId: true } },
     },
   });
 
@@ -326,6 +327,16 @@ export const getPlan = asyncHandler(async (req, res) => {
       success: false,
       message: 'Plan not found',
     });
+  }
+
+  const role = req.user.role;
+  const canAccess =
+    role === 'admin' ||
+    (role === 'areaManager' && req.user.areaId && plan.branch?.areaId === req.user.areaId) ||
+    (['branchManager', 'supervisor', 'staff'].includes(role) && req.user.branchId && plan.branchId === req.user.branchId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to view this plan' });
   }
 
   res.status(200).json({

@@ -591,6 +591,10 @@ export const reviewTaskEdit = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Task not found' });
   }
 
+  if (['branchManager', 'supervisor'].includes(req.user.role) && req.user.branchId && task.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Task is outside your branch' });
+  }
+
   if (!task.requestedEditData) {
     return res.status(400).json({ success: false, message: 'No pending edit request on this task' });
   }

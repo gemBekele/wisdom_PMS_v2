@@ -248,7 +248,7 @@ export const getPerformanceScore = asyncHandler(async (req, res) => {
   const score = await prisma.performanceScore.findUnique({
     where: { id: req.params.id },
     include: {
-      user: { select: { id: true, name: true, employeeId: true, role: true } },
+      user: { select: { id: true, name: true, employeeId: true, role: true, areaId: true, branchId: true } },
       branch: { select: { id: true, name: true, code: true } },
       behavioralEvaluation: true,
     },
@@ -259,6 +259,17 @@ export const getPerformanceScore = asyncHandler(async (req, res) => {
       success: false,
       message: 'Performance score not found',
     });
+  }
+
+  const role = req.user.role;
+  const canAccess =
+    role === 'admin' ||
+    score.userId === req.user.id ||
+    (role === 'areaManager' && req.user.areaId && score.user?.areaId === req.user.areaId) ||
+    (['branchManager', 'supervisor'].includes(role) && req.user.branchId && score.branchId === req.user.branchId);
+
+  if (!canAccess) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to view this score' });
   }
 
   res.status(200).json({

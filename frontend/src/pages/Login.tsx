@@ -1,20 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
 import { useUser } from '@/contexts/UserContext';
 import { mapBackendRoleToFrontend } from '@/lib/roleMapper';
-import { AlertCircle, Lock, Search, Check } from 'lucide-react';
-
-const ROLE_FILTERS = [
-  { key: '', label: 'All' },
-  { key: 'admin', label: 'Admin' },
-  { key: 'areaManager', label: 'Area' },
-  { key: 'branchManager', label: 'BM' },
-  { key: 'supervisor', label: 'Supervisor' },
-  { key: 'staff', label: 'Staff' },
-];
+import { AlertCircle, Lock, Mail } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
   { role: 'admin', label: 'Administrator', email: 'admin@wisdomsaccos.com', password: 'admin123', position: 'Branch Manager' },
@@ -25,79 +16,28 @@ const DEMO_ACCOUNTS = [
 ];
 
 export function Login() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [roleFilter, setRoleFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [focused, setFocused] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { setRole, setCurrentBranch, setUserName, loadUser } = useUser();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (listRef.current && !listRef.current.contains(e.target as Node)) {
-        setFocused(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await fetch('/api/users/public-list');
-      const data = await res.json();
-      if (data && data.data) setUsers(data.data);
-      else if (Array.isArray(data)) setUsers(data);
-    } catch {
-      // Public list is optional; the demo accounts below still work.
-    }
-  };
-
-  const filteredUsers = users.filter(u => {
-    if (roleFilter && u.role !== roleFilter) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const name = (u.name || '').toLowerCase();
-      const pos = (u.position || u.role || '').toLowerCase();
-      const loc = (u.location || u.branch_code || '').toLowerCase();
-      if (!name.includes(q) && !pos.includes(q) && !loc.includes(q)) return false;
-    }
-    return true;
-  });
-
   const handleDemoLogin = (account: typeof DEMO_ACCOUNTS[number]) => {
-    const match = users.find(u => u.email === account.email);
-    setSelectedUser(match || {
-      email: account.email,
-      name: account.label,
-      role: account.role,
-      position: account.position,
-    });
+    setEmail(account.email);
     setPassword(account.password);
-    setRoleFilter('');
-    setSearchQuery('');
-    setFocused(false);
     setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!selectedUser) { setError('Please select a user'); return; }
+    if (!email.trim()) { setError('Please enter your email'); return; }
     if (!password) { setError('Please enter password'); return; }
     setLoading(true);
 
     try {
-      const response = await authAPI.login(selectedUser.email, password);
+      const response = await authAPI.login(email.trim(), password);
       if (response.success && response.data) {
         const frontendRole = mapBackendRoleToFrontend(response.data.role);
         setRole(frontendRole);
@@ -212,77 +152,20 @@ export function Login() {
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-stone">Select user</label>
-                  <div className="relative" ref={listRef}>
-                    <div className="mb-2 flex flex-wrap items-center gap-1">
-                      {ROLE_FILTERS.map(f => (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => { setRoleFilter(f.key); setSearchQuery(''); }}
-                          className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                            roleFilter === f.key
-                              ? 'bg-primary-900 text-white'
-                              : 'bg-ivory text-stone hover:bg-line'
-                          }`}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone/60" />
-                      <input
-                        type="text"
-                        placeholder="Search by name, role, or branch..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        onFocus={() => setFocused(true)}
-                        className="w-full border border-line bg-ivory py-2.5 pl-9 pr-4 text-sm text-ink placeholder:text-stone/50 focus:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-700/20"
-                      />
-                    </div>
-
-                    {focused && (
-                      <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto border border-line bg-white shadow-xl">
-                        {filteredUsers.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-stone">No users match</div>
-                        ) : (
-                          filteredUsers.map((u: any) => {
-                            const isSelected = selectedUser?._id === u._id || selectedUser?.id === u.id;
-                            return (
-                              <div
-                                key={u._id || u.id}
-                                onClick={() => { setSelectedUser(u); setFocused(false); setError(''); }}
-                                className={`flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-accent-50 ${
-                                  isSelected ? 'border-l-2 border-accent bg-accent-50' : 'border-l-2 border-transparent'
-                                }`}
-                              >
-                                <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  <span className="truncate font-medium text-ink">{u.name}</span>
-                                  <span className="shrink-0 bg-ivory px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone">
-                                    {u.position || u.role}
-                                  </span>
-                                  {u.branch_code && (
-                                    <span className="shrink-0 truncate text-xs text-stone/70">{u.branch_code}</span>
-                                  )}
-                                </div>
-                                {isSelected && <Check className="ml-2 h-4 w-4 shrink-0 text-accent-600" />}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
+                  <label className="text-xs font-semibold uppercase tracking-wider text-stone">Email</label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone/60" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@wisdomsaccos.com"
+                      required
+                      disabled={loading}
+                      autoComplete="username"
+                      className="w-full border border-line bg-ivory py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-stone/50 focus:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-700/20"
+                    />
                   </div>
-                  {selectedUser && !focused && (
-                    <div className="flex items-center gap-2 border border-accent-200 bg-accent-50 px-3 py-2 text-sm">
-                      <Check className="h-4 w-4 shrink-0 text-accent-600" />
-                      <span className="font-medium text-primary-900">{selectedUser.name}</span>
-                      <span className="bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone">{selectedUser.position || selectedUser.role}</span>
-                      {selectedUser.branch_code && <span className="text-xs text-stone">{selectedUser.branch_code}</span>}
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-1.5">

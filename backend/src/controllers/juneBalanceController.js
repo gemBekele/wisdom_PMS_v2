@@ -29,7 +29,7 @@ export const importJuneBalance = asyncHandler(async (req, res) => {
   }
 
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(fs.readFileSync(req.file.path), { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);
@@ -48,67 +48,87 @@ export const importJuneBalance = asyncHandler(async (req, res) => {
       errors: [],
     };
 
+    const records = [];
+    const seen = new Set();
+
     for (const row of data) {
-      try {
-        const account_id = String(row.account_id || row.accountId || row['Account ID'] || '').trim();
-        const june_balance = parseFloat(row.june_balance || row.juneBalance || row['June Balance'] || 0);
-        const accountNumber = String(row.accountNumber || row.account_number || row['Account Number'] || '').trim();
-        const branch_code = String(row.branch_code || row.branchCode || row['Branch Code'] || '').trim().toUpperCase();
+      const account_id = String(row.account_id || row.accountId || row['Account ID'] || '').trim();
+      const june_balance = Number(row.june_balance ?? row.juneBalance ?? row['June Balance'] ?? 0);
+      const accountNumber = String(row.accountNumber || row.account_number || row['Account Number'] || '').trim();
+      const branch_code = String(row.branch_code || row.branchCode || row['Branch Code'] || '').trim().toUpperCase();
 
-        if (!account_id) {
-          results.errors.push(`Row missing account_id`);
-          continue;
-        }
-
-        const existing = await prisma.juneBalance.findUnique({
-          where: {
-            account_id_baseline_period: {
-              account_id,
-              baseline_period
-            }
-          }
-        });
-
-        if (existing) {
-          await prisma.juneBalance.update({
-            where: { id: existing.id },
-            data: {
-              accountNumber: accountNumber || null,
-              june_balance,
-              branch_code: branch_code || null,
-              baseline_date,
-              is_active: make_active,
-              importedById: req.user.id,
-              importedAt: new Date(),
-            }
-          });
-          results.updated++;
-        } else {
-          await prisma.juneBalance.create({
-            data: {
-              account_id,
-              accountNumber: accountNumber || null,
-              june_balance,
-              branch_code: branch_code || null,
-              baseline_period,
-              baseline_date,
-              is_active: make_active,
-              importedById: req.user.id,
-            }
-          });
-          results.imported++;
-        }
-      } catch (error) {
-        results.errors.push(`Error: ${error.message}`);
+      if (!account_id) {
+        results.errors.push('Row missing account_id');
+        continue;
       }
+      if (seen.has(account_id)) {
+        results.errors.push(`Duplicate account_id in file: ${account_id}`);
+        continue;
+      }
+      if (!Number.isFinite(june_balance) || june_balance < 0) {
+        results.errors.push(`Invalid june_balance for account ${account_id}`);
+        continue;
+      }
+
+      seen.add(account_id);
+      records.push({ account_id, accountNumber, june_balance, branch_code });
     }
 
-    if (make_active && (results.imported + results.updated) > 0) {
-      await prisma.juneBalance.updateMany({
-        where: { is_active: true, baseline_period: { not: baseline_period } },
-        data: { is_active: false },
+    if (records.length === 0 || results.errors.length > 0) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        success: false,
+        message: 'No rows were imported. Fix the file errors and try again.',
+        data: results,
       });
     }
+
+    const existingRows = await prisma.juneBalance.findMany({
+      where: { baseline_period, account_id: { in: records.map(r => r.account_id) } },
+      select: { account_id: true },
+    });
+    const existingIds = new Set(existingRows.map(r => r.account_id));
+
+    await prisma.$transaction(async (tx) => {
+      for (const record of records) {
+        await tx.juneBalance.upsert({
+          where: {
+            account_id_baseline_period: {
+              account_id: record.account_id,
+              baseline_period,
+            },
+          },
+          update: {
+            accountNumber: record.accountNumber || null,
+            june_balance: record.june_balance,
+            branch_code: record.branch_code || null,
+            baseline_date,
+            is_active: make_active,
+            importedById: req.user.id,
+            importedAt: new Date(),
+          },
+          create: {
+            account_id: record.account_id,
+            accountNumber: record.accountNumber || null,
+            june_balance: record.june_balance,
+            branch_code: record.branch_code || null,
+            baseline_period,
+            baseline_date,
+            is_active: make_active,
+            importedById: req.user.id,
+          },
+        });
+        if (existingIds.has(record.account_id)) results.updated++;
+        else results.imported++;
+      }
+
+      if (make_active) {
+        await tx.juneBalance.updateMany({
+          where: { is_active: true, baseline_period: { not: baseline_period } },
+          data: { is_active: false },
+        });
+      }
+    });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 

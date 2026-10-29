@@ -69,12 +69,24 @@ export const createMapping = asyncHandler(async (req, res) => {
 
   const kpiEnum = KPI_CATEGORY_TO_ENUM[kpi_category] || kpi_category;
   const productName = cbs_product_name.trim();
+  const minBalance = req.body.min_balance === undefined ? 0 : Number(req.body.min_balance);
+  if (!Number.isFinite(minBalance) || minBalance < 0) {
+    return res.status(400).json({ success: false, message: 'min_balance must be a non-negative number' });
+  }
+  const requiresCbs = req.body.requiresCbs === undefined ? true : Boolean(req.body.requiresCbs);
+
+  const existing = await prisma.productKpiMapping.findUnique({
+    where: { cbs_product_name: productName },
+    select: { id: true },
+  });
 
   const mapping = await prisma.productKpiMapping.upsert({
     where: { cbs_product_name: productName },
     update: {
       kpi_category: kpiEnum,
       notes,
+      min_balance: minBalance,
+      requiresCbs,
       status: 'active',
       mappedById: req.user.id,
       mapped_at: new Date(),
@@ -83,6 +95,8 @@ export const createMapping = asyncHandler(async (req, res) => {
       cbs_product_name: productName,
       kpi_category: kpiEnum,
       notes,
+      min_balance: minBalance,
+      requiresCbs,
       mappedById: req.user.id,
       status: 'active',
     },
@@ -98,7 +112,7 @@ export const createMapping = asyncHandler(async (req, res) => {
     req
   );
 
-  res.status(200).json({
+  res.status(existing ? 200 : 201).json({
     success: true,
     data: { ...mapping, _id: mapping.id },
   });

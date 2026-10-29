@@ -1,5 +1,18 @@
 import prisma from '../config/database.js';
 import { KPI_CATEGORY_TO_ENUM, TASK_TYPE_TO_ENUM, CBS_PRODUCT_TO_CATEGORY, PRODUCT_CATEGORY_TO_KPI } from './prismaHelpers.js';
+import { getPeriodStart, getPeriodEnd } from './periodUtils.js';
+
+const KPI_TASK_TYPES = {
+  Deposit_Mobilization: ['Deposit_Mobilization', 'Loan_Saving_Deposit', 'Michu_Current_Saving', 'Gihon_Regular_Saving', 'Mothers_Saving', 'Young_Womens_Saving', 'Elders_Saving', 'Children_Saving', 'Fixed_Time_Deposit', 'Premium_Saving_Deposit', 'Special_Saving', 'Segment_Deposit', 'Wadiah_IFB_Deposit'],
+  New_Member_Registration: ['New_Member_Registration'],
+  New_Account_Opening: ['New_Account_Opening'],
+  Share_Capital_Growth: ['Share_Capital_Growth'],
+  Account_Productivity: ['Account_Productivity'],
+  Mobile_Banking_Users: ['Mobile_Banking_Users'],
+  Merchant_POS_Growth: ['Merchant_POS_Growth'],
+  Billers_Recruitment: ['Billers_Recruitment'],
+  Internal_Operations: ['Internal_Operations'],
+};
 
 /**
  * Build Prisma where clause to filter tasks that count toward achievement.
@@ -204,7 +217,7 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
 
     // Calculate score for each KPI-level StaffPlan
     for (const plan of kpiStaffPlans) {
-      const { kpi_category, individual_target } = plan;
+      const { kpi_category, individual_target, target_count } = plan;
 
       let actualGrowth = 0;
 
@@ -227,16 +240,33 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
           const parMetrics = await calculateParMetrics(loanAccounts.map(a => a.id));
           actualGrowth = parMetrics.totalPortfolio > 0 ? 100 - parMetrics.par90Ratio : 100;
         }
+      } else {
+        const taskTypes = KPI_TASK_TYPES[kpi_category];
+        if (taskTypes) {
+          const start = getPeriodStart(period);
+          const end = getPeriodEnd(period);
+          actualGrowth = await prisma.dailyTask.count({
+            where: {
+              submittedById: userId,
+              approvalStatus: 'Approved',
+              taskType: { in: taskTypes },
+              taskDate: { gte: start, lte: end },
+            },
+          });
+        }
       }
 
+      const isCountKpi = !['Deposit_Mobilization', 'Collection_Rate', 'Portfolio_Quality'].includes(kpi_category);
+      const effectiveTarget = isCountKpi && Number(target_count) > 0 ? Number(target_count) : individual_target;
+
       // Calculate percentage and score
-      const percent = individual_target > 0 ? Math.min(100, (actualGrowth / individual_target) * 100) : 0;
+      const percent = effectiveTarget > 0 ? Math.min(100, (actualGrowth / effectiveTarget) * 100) : 0;
 
       const weight = weights[kpi_category] || 0;
       const categoryScore = (percent / 100) * weight;
 
       const scoreEntry = {
-        target: individual_target,
+        target: effectiveTarget,
         actual: actualGrowth,
         percent: Math.round(percent * 100) / 100,
         weight: weight,

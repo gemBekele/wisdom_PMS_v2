@@ -78,6 +78,16 @@ export const createTeam = asyncHandler(async (req, res) => {
 
   const validMemberIds = Array.isArray(memberIds) ? memberIds.filter(Boolean) : [];
   if (validMemberIds.length > 0) {
+    const members = await prisma.user.findMany({
+      where: { id: { in: validMemberIds } },
+      select: { id: true, name: true, branchId: true, isActive: true },
+    });
+    const invalidMember = members.find(m => !m.isActive || m.branchId !== targetBranchId);
+    if (invalidMember || members.length !== validMemberIds.length) {
+      await prisma.team.delete({ where: { id: team.id } });
+      return res.status(400).json({ success: false, message: 'All team members must be active users in this branch' });
+    }
+
     const alreadyAssigned = await prisma.user.findMany({
       where: { id: { in: validMemberIds }, teamId: { not: null } },
       select: { id: true, name: true, teamId: true },

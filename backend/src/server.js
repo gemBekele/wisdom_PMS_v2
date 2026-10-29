@@ -8,6 +8,8 @@ import rateLimit from 'express-rate-limit';
 import { connectDB, prisma } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { generateNplSnapshot } from './utils/performanceCalculator.js';
+import { recalculateScoresForPeriod } from './utils/scoreRecalculator.js';
+import { getActivePeriod } from './utils/periodUtils.js';
 
 // Load env vars
 dotenv.config();

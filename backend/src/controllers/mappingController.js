@@ -347,7 +347,7 @@ export const bulkUploadMappings = asyncHandler(async (req, res) => {
   // Branch check removed here to allow automatic detection from staff employeeId in rows
 
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(fs.readFileSync(req.file.path), { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);

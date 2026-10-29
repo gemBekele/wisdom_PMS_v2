@@ -460,6 +460,10 @@ export const updateUser = asyncHandler(async (req, res) => {
     }
   }
 
+  if (updateData.password || updateData.role !== undefined || updateData.isActive === false) {
+    updateData.tokenVersion = { increment: 1 };
+  }
+
   const user = await prisma.user.update({
     where: { id: req.params.id },
     data: updateData,
@@ -499,7 +503,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
   await prisma.user.update({
     where: { id: req.params.id },
-    data: { isActive: false },
+    data: { isActive: false, tokenVersion: { increment: 1 } },
   });
 
   await logAudit(
@@ -538,7 +542,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   await prisma.user.update({
     where: { id: req.params.id },
-    data: { password: hashedPassword },
+    data: { password: hashedPassword, tokenVersion: { increment: 1 } },
   });
 
   await logAudit(

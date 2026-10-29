@@ -30,19 +30,39 @@ export const getTransactions = asyncHandler(async (req, res) => {
 export const createTransaction = asyncHandler(async (req, res) => {
   const { account_no, transaction_type, credit, debit, description, transaction_date, branch_code, reference } = req.body;
 
-  if (!account_no) {
+  if (!account_no || !String(account_no).trim()) {
     return res.status(400).json({ success: false, message: 'account_no is required' });
+  }
+
+  const type = transaction_type || 'credit';
+  if (!['credit', 'debit'].includes(type)) {
+    return res.status(400).json({ success: false, message: 'transaction_type must be credit or debit' });
+  }
+
+  const creditValue = credit === undefined || credit === null || credit === '' ? 0 : Number(credit);
+  const debitValue = debit === undefined || debit === null || debit === '' ? 0 : Number(debit);
+  if (!Number.isFinite(creditValue) || !Number.isFinite(debitValue) || creditValue < 0 || debitValue < 0) {
+    return res.status(400).json({ success: false, message: 'credit and debit must be non-negative numbers' });
+  }
+
+  const transactionDate = transaction_date ? new Date(transaction_date) : new Date();
+  if (Number.isNaN(transactionDate.getTime())) {
+    return res.status(400).json({ success: false, message: 'Invalid transaction_date' });
+  }
+
+  if (req.user.role !== 'admin' && branch_code && req.user.branch_code && branch_code !== req.user.branch_code) {
+    return res.status(403).json({ success: false, message: 'You can only create transactions for your own branch' });
   }
 
   const transaction = await prisma.transaction.create({
     data: {
       account_no,
-      transaction_type: transaction_type || 'credit',
-      credit: parseFloat(credit || 0),
-      debit: parseFloat(debit || 0),
+      transaction_type: type,
+      credit: creditValue,
+      debit: debitValue,
       description: description || null,
-      transaction_date: transaction_date ? new Date(transaction_date) : new Date(),
-      branch_code: branch_code || null,
+      transaction_date: transactionDate,
+      branch_code: branch_code || req.user.branch_code || null,
       reference: reference || null,
     },
   });

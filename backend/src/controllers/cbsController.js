@@ -3,6 +3,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { logAudit } from '../utils/auditLogger.js';
 import XLSX from 'xlsx';
 import fs from 'fs';
+import crypto from 'crypto';
 import { DISCREPANCY_TYPE_TO_ENUM, CBS_PRODUCT_TO_CATEGORY } from '../utils/prismaHelpers.js';
 import { notifyCbsValidation } from '../utils/notificationService.js';
 
@@ -418,8 +419,30 @@ export const uploadCBS = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid branch code' });
   }
 
+  let validationId = null;
+
   try {
-    const workbook = XLSX.readFile(req.file.path);
+    const fileHash = crypto.createHash('sha256').update(fs.readFileSync(req.file.path)).digest('hex');
+
+    const duplicate = await prisma.cBSValidation.findFirst({
+      where: {
+        branchId: branch.id,
+        fileHash,
+        status: { in: ['Completed', 'Partial'] },
+      },
+      select: { id: true, fileName: true, createdAt: true },
+    });
+
+    if (duplicate) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(409).json({
+        success: false,
+        message: 'This CBS file has already been processed for this branch',
+        data: duplicate,
+      });
+    }
+
+    const workbook = XLSX.read(fs.readFileSync(req.file.path), { type: 'buffer' });
     const cbsData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
 
     if (!cbsData || cbsData.length === 0) {
@@ -435,10 +458,12 @@ export const uploadCBS = asyncHandler(async (req, res) => {
         validationDate: validationDateParsed,
         fileName: req.file.filename,
         filePath: req.file.path,
+        fileHash,
         uploadedById: req.user.id,
         status: 'Processing',
       }
     });
+    validationId = validation.id;
 
     const unmappedProducts = await detectUnmappedProducts(cbsData);
     const balanceUpdate = await updateAccountBalances(cbsData, branch.id, validation.validationDate);
@@ -503,6 +528,12 @@ export const uploadCBS = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
+    if (validationId) {
+      await prisma.cBSValidation.update({
+        where: { id: validationId },
+        data: { status: 'Failed' },
+      }).catch(() => {});
+    }
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     throw error;
   }

@@ -260,6 +260,7 @@ model User {
   area                 Area?     @relation("AreaUsers", fields: [areaId], references: [id])
   position             Position
   isActive             Boolean   @default(true)
+  tokenVersion         Int       @default(0)
   supervisorId         String?
   supervisor           User?     @relation("Supervisor", fields: [supervisorId], references: [id])
   resetPasswordToken   String?
@@ -420,6 +421,7 @@ model StaffPlan {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
+  @@unique([branchPlanId, userId])
   @@index([userId, kpi_category, period])
   @@index([userId, status, period])
   @@index([branch_code, period])
@@ -575,6 +577,7 @@ model TaskApproval {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
+  @@unique([taskId, approverId])
   @@index([taskId])
   @@index([approverId])
   @@index([approverId, status])
@@ -608,6 +611,7 @@ model PerformanceScore {
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
 
+  @@unique([userId, period, year, month])
   @@index([userId, period, year, month])
   @@index([branchId, period, year])
   @@map("performance_scores")
@@ -651,6 +655,7 @@ model CBSValidation {
   validationDate   DateTime
   fileName         String
   filePath         String
+  fileHash         String?
   uploadedById     String
   uploadedBy       User                @relation("CBSUploader", fields: [uploadedById], references: [id])
   totalRecords     Int                 @default(0)
@@ -670,6 +675,7 @@ model CBSValidation {
   discrepancies CBSDiscrepancy[]
   dailyTasks    DailyTask[]
 
+  @@unique([branchId, fileHash])
   @@index([branchId, validationDate])
   @@index([status])
   @@index([validationDate])

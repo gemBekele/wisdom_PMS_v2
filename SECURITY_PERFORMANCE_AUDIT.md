@@ -1,5 +1,7 @@
 # Wisdom SACCOS PMS — Security, Performance & Business Logic Audit
 
+> **Update (2026-10-29):** A subsequent deep-test/hardening pass fixed the public user directory, JWT revocation, key IDOR paths, CBS idempotency, June import transactions, score scheduling, score caps, non-deposit KPI counts, upload handling, unique constraints, and vulnerable `xlsx`/`react-router` versions. See `DEEP_TEST_REPORT.md` for the final state and remaining gaps.
+
 Date: 2026-10-29
 Scope: `backend/` and `frontend/` of the Wisdom-SACCOS-PMS repository.
 

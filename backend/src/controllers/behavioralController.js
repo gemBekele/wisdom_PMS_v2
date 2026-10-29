@@ -4,18 +4,25 @@ import { logAudit } from '../utils/auditLogger.js';
 
 // Helper: Calculate behavioral score
 const calculateBehavioralScore = (competencies) => {
-  let totalScore = 0;
-  const maxScore = 5; // Max score per competency
+  const items = Array.isArray(competencies) ? competencies : Object.values(competencies || {});
+  if (items.length === 0) return 0;
 
-  Object.values(competencies).forEach(comp => {
-    if (comp.score && comp.weight) {
-      const normalizedScore = (comp.score / maxScore) * 100;
-      totalScore += (normalizedScore * comp.weight) / 100;
-    }
-  });
+  const defaultWeight = 100 / items.length;
+  let weightedScore = 0;
+  let totalWeight = 0;
 
-  // Convert to 15% scale
-  return (totalScore / 100) * 15;
+  for (const comp of items) {
+    const score = Number(comp?.score ?? 0);
+    const maxScore = Number(comp?.maxScore ?? 5) || 5;
+    const weight = Number(comp?.weight ?? defaultWeight);
+    if (!Number.isFinite(score) || !Number.isFinite(weight) || weight <= 0) continue;
+    weightedScore += (Math.min(score, maxScore) / maxScore) * weight;
+    totalWeight += weight;
+  }
+
+  if (totalWeight === 0) return 0;
+  // Convert to the 0-15 behavioral scale.
+  return Math.round(((weightedScore / totalWeight) * 15) * 100) / 100;
 };
 
 // Helper: Build approval chain
@@ -48,6 +55,26 @@ export const createBehavioralEvaluation = asyncHandler(async (req, res) => {
   if (!evaluatedUserId) {
     return res.status(400).json({ success: false, message: 'evaluatedUserId is required' });
   }
+
+  const validPeriods = ['Monthly', 'Quarterly', 'Annual'];
+  if (!validPeriods.includes(period)) {
+    return res.status(400).json({ success: false, message: 'period must be Monthly, Quarterly, or Annual' });
+  }
+  if (period === 'Monthly' && !month) {
+    return res.status(400).json({ success: false, message: 'month is required for Monthly evaluations' });
+  }
+  if (period === 'Quarterly' && !quarter) {
+    return res.status(400).json({ success: false, message: 'quarter is required for Quarterly evaluations' });
+  }
+  const parsedYear = Number(year);
+  if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+    return res.status(400).json({ success: false, message: 'year must be a valid year' });
+  }
+  const competencyItems = Array.isArray(competencies) ? competencies : Object.values(competencies || {});
+  if (competencyItems.length === 0 || competencyItems.some(c => !Number.isFinite(Number(c?.score)))) {
+    return res.status(400).json({ success: false, message: 'At least one competency with a numeric score is required' });
+  }
+
   if (evaluatedUserId === req.user.id) {
     return res.status(400).json({ success: false, message: 'You cannot evaluate yourself' });
   }
@@ -72,7 +99,7 @@ export const createBehavioralEvaluation = asyncHandler(async (req, res) => {
         evaluatedById: req.user.id,
         branchId: req.user.branchId,
         period,
-        year: parseInt(year),
+        year: parsedYear,
         month: month ? parseInt(month) : null,
         quarter: quarter ? parseInt(quarter) : null,
         competencies,
@@ -108,15 +135,21 @@ export const getBehavioralEvaluations = asyncHandler(async (req, res) => {
   const { evaluatedUserId, branchId, period, year, approvalStatus } = req.query;
 
   const where = {};
+  const role = req.user.role;
 
-  if (req.user.role === 'staff') {
+  if (role === 'staff') {
     where.evaluatedUserId = req.user.id;
   } else if (evaluatedUserId) {
     where.evaluatedUserId = evaluatedUserId;
   }
 
-  if (branchId) where.branchId = branchId;
-  else if (req.user.branchId) where.branchId = req.user.branchId;
+  if (role === 'admin') {
+    if (branchId) where.branchId = branchId;
+  } else if (role === 'areaManager' && req.user.areaId) {
+    where.branch = { areaId: req.user.areaId };
+  } else if (req.user.branchId) {
+    where.branchId = req.user.branchId;
+  }
 
   if (period) where.period = period;
   if (year) where.year = parseInt(year);

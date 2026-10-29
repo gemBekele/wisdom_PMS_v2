@@ -31,6 +31,7 @@ export const protect = async (req, res, next) => {
         position: true,
         supervisorId: true,
         isActive: true,
+        tokenVersion: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -40,6 +41,13 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'User not found or inactive',
+      });
+    }
+
+    if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session has been revoked. Please log in again.',
       });
     }
 
