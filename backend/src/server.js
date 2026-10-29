@@ -2,6 +2,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cron from 'node-cron';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import { connectDB, prisma } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { generateNplSnapshot } from './utils/performanceCalculator.js';
@@ -9,11 +12,35 @@ import { generateNplSnapshot } from './utils/performanceCalculator.js';
 // Load env vars
 dotenv.config();
 
-const app = express();
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  console.error('❌ JWT_SECRET must be set to a random value of at least 32 characters');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const app = express();
+app.set('trust proxy', 1);
+
+app.use(helmet());
+app.use(compression());
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please try again later.' },
+});
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+});
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', loginLimiter);
 
 // CORS - Allow all origins in development, specific origin in production
 const corsOptions = {
@@ -37,8 +64,8 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
@@ -103,7 +130,7 @@ app.use('/api/settings', settingsRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Ghion SACCOS PMS API is running',
+    message: 'Wisdom SACCOS PMS API is running',
     timestamp: new Date().toISOString(),
   });
 });

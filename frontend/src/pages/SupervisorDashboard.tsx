@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, FileText, CheckCircle, Clock, ArrowRight } from 'lucide-react';
 import { dashboardAPI, tasksAPI } from '@/lib/api';
 
 export function SupervisorDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalMembers: 0, totalMappedAccounts: 0, averageKpiAchievement: 0 });
   const [pendingApprovals, setPendingApprovals] = useState(0);
@@ -44,10 +46,10 @@ export function SupervisorDashboard() {
           <p className="text-xs text-slate-500 mt-0.5">Quick overview of your team</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => window.location.href = '/team-hub'} className="bg-orange-600 hover:bg-orange-700 text-white">
+          <Button onClick={() => navigate('/team-hub')} className="bg-orange-600 hover:bg-orange-700 text-white">
             View Team Hub <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
-          <Button variant="outline" onClick={() => window.location.href = '/tasks/new'}>
+          <Button variant="outline" onClick={() => navigate('/tasks/new')}>
             Log Daily Task
           </Button>
         </div>

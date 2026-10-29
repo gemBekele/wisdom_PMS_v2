@@ -67,3 +67,8 @@ ALTER TABLE "_SubTeamMembers" ADD CONSTRAINT "_SubTeamMembers_A_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "_SubTeamMembers" ADD CONSTRAINT "_SubTeamMembers_B_fkey" FOREIGN KEY ("B") REFERENCES "users"("_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Missing in the original migration: User.teamId relation used by the Prisma schema.
+ALTER TABLE "users" ADD COLUMN "teamId" TEXT;
+CREATE INDEX "users_teamId_idx" ON "users"("teamId");
+ALTER TABLE "users" ADD CONSTRAINT "users_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("_id") ON DELETE SET NULL ON UPDATE CASCADE;

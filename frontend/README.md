@@ -1,6 +1,6 @@
-# SAKO Performance Management System (PMS)
+# Wisdom SACCOS Performance Management System (PMS)
 
-A comprehensive Performance Management System frontend for SAKO Microfinance built with React, TypeScript, Tailwind CSS, and shadcn/ui.
+A comprehensive Performance Management System frontend for Wisdom SACCOS Microfinance built with React, TypeScript, Tailwind CSS, and shadcn/ui.
 
 ## Features
 
@@ -62,7 +62,7 @@ src/
 ## User Roles
 
 The system supports multiple user roles:
-- SAKO HQ / Admin
+- Wisdom SACCOS HQ / Admin
 - Regional Director
 - Area Manager
 - Branch Manager

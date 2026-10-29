@@ -1,4 +1,4 @@
-# Sacko-PMS — End-to-End Test Coverage
+# Wisdom-PMS — End-to-End Test Coverage
 
 **Updated:** 2026-07-16  
 **Purpose:** Document every endpoint, data flow, and component with its test status. If work stops, resume from the last ❌ or ⬜.
@@ -23,11 +23,11 @@
 
 | # | Email | Password | Role | Status |
 |---|-------|----------|------|--------|
-| 2.1 | `admin@ghion.et` | `1234` | admin | ✅ |
+| 2.1 | `admin@wisdomsaccos.com` | `1234` | admin | ✅ |
 | 2.2 | `am@wolayta.et` | `1234` | areaManager | ✅ |
 | 2.3 | `bm@sodo.et` | `1234` | branchManager | ✅ |
-| 2.4 | `kidistale_gns@ghion.et` | `1234` | supervisor | ✅ |
-| 2.5 | `tigist_gns@ghion.et` | `1234` | staff | ✅ |
+| 2.4 | `kidistale_gns@wisdomsaccos.com` | `1234` | supervisor | ✅ |
+| 2.5 | `tigist_gns@wisdomsaccos.com` | `1234` | staff | ✅ |
 
 ---
 
@@ -216,16 +216,16 @@ Run these in a browser logged in as each role. Mark ✅ when the page renders co
 |---|------|--------|
 | 8.0.1 | Login page renders with email + password fields and role/position dropdown | ⬜ |
 | 8.0.2 | Can select position from dropdown that filters users | ⬜ |
-| 8.0.3 | Login with `admin@ghion.et` / `1234` → redirects to `/dashboard/hq` | ⬜ |
+| 8.0.3 | Login with `admin@wisdomsaccos.com` / `1234` → redirects to `/dashboard/hq` | ⬜ |
 | 8.0.4 | Login with `am@wolayta.et` / `1234` → redirects to `/dashboard/area` | ⬜ |
 | 8.0.5 | Login with `bm@sodo.et` / `1234` → redirects to `/dashboard/branch` | ⬜ |
-| 8.0.6 | Login with `kidistale_gns@ghion.et` / `1234` → redirects to `/dashboard/supervisor` | ⬜ |
-| 8.0.7 | Login with `tigist_gns@ghion.et` / `1234` → redirects to `/dashboard/staff` | ⬜ |
+| 8.0.6 | Login with `kidistale_gns@wisdomsaccos.com` / `1234` → redirects to `/dashboard/supervisor` | ⬜ |
+| 8.0.7 | Login with `tigist_gns@wisdomsaccos.com` / `1234` → redirects to `/dashboard/staff` | ⬜ |
 | 8.0.8 | Wrong password shows error message | ⬜ |
 | 8.0.9 | Token persists on refresh (session stays) | ⬜ |
 | 8.0.10 | Logout clears token → redirects to login | ⬜ |
 
-### 8.1 Admin / CEO (`admin@ghion.et`)
+### 8.1 Admin / CEO (`admin@wisdomsaccos.com`)
 
 #### 8.1.1 HQ Dashboard (`/dashboard/hq`)
 
@@ -363,7 +363,7 @@ Run these in a browser logged in as each role. Mark ✅ when the page renders co
 | 8.3.4.2 | Can approve pending tasks (final approval) | ⬜ |
 | 8.3.4.3 | Can view task details | ⬜ |
 
-### 8.4 Supervisor (`kidistale_gns@ghion.et`)
+### 8.4 Supervisor (`kidistale_gns@wisdomsaccos.com`)
 
 #### 8.4.1 Supervisor Dashboard (`/dashboard/supervisor`)
 
@@ -391,7 +391,7 @@ Run these in a browser logged in as each role. Mark ✅ when the page renders co
 | 8.4.3.1 | Shows overdue alerts grouped by supervisee | ⬜ |
 | 8.4.3.2 | High-priority alerts highlighted | ⬜ |
 
-### 8.5 Staff (`tigist_gns@ghion.et`)
+### 8.5 Staff (`tigist_gns@wisdomsaccos.com`)
 
 #### 8.5.1 Staff Dashboard (`/dashboard/staff`)
 
@@ -458,9 +458,9 @@ Run these in a browser logged in as each role. Mark ✅ when the page renders co
 |---|------|---------------|--------|
 | 9.1 | `npm run build` (frontend) | Frontend builds with 0 TypeScript + Vite errors | ⬜ |
 | 9.2 | Nginx proxy `/api/` → `127.0.0.1:5001/api/` | Production API routing | ⬜ |
-| 9.3 | Frontend served from `/var/www/sacko-pms/frontend/dist` | Production static serving | ⬜ |
+| 9.3 | Frontend served from `/var/www/wisdom-saccos-pms/frontend/dist` | Production static serving | ⬜ |
 | 9.4 | `npm run build` output checked for 0 errors | Vite build output shows no errors or warnings | ⬜ |
-| 9.5 | `pm2 restart sacko-pms-backend` | Backend restart (PM2) | ✅ |
+| 9.5 | `pm2 restart wisdom-saccos-pms-backend` | Backend restart (PM2) | ✅ |
 
 ---
 
@@ -468,7 +468,7 @@ Run these in a browser logged in as each role. Mark ✅ when the page renders co
 
 | # | Script | Purpose | Status |
 |---|--------|---------|--------|
-| 10.1 | `seedGhionSaccos.js` | Ghion SACCOS full seed: users, branches, plans, accounts, tasks, mappings | ✅ |
+| 10.1 | `seedWisdomSaccos.js` | Wisdom SACCOS full seed: users, branches, plans, accounts, tasks, mappings | ✅ |
 | 10.2 | `seedProductMappings.js` | Wolaitta Sodo product-KPI mappings with `requiresCbs: false` | ✅ |
 | 10.3 | `seedLoanData.js` | 2 test loan accounts + schedules | ✅ |
 | 10.4 | `seedFromFiles.js` | Seed from Accounts.csv + WSodo plan Excel | ⬜ |

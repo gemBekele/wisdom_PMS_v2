@@ -163,7 +163,7 @@ export function KPIDashboard() {
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="target" fill="#e2e8f0" name="Target" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="actual" fill="#3b82f6" name="Actual" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="actual" fill="#202289" name="Actual" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -190,7 +190,7 @@ export function KPIDashboard() {
                 <PolarGrid />
                 <PolarAngleAxis dataKey="competency" />
                 <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                <Radar name="Performance" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
+                <Radar name="Performance" dataKey="score" stroke="#202289" fill="#202289" fillOpacity={0.6} />
                 <Tooltip />
               </RadarChart>
             </ResponsiveContainer>

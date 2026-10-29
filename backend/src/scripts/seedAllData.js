@@ -7,7 +7,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding minimal data for SAKO PMS...\n');
+  console.log('🌱 Seeding minimal data for Wisdom SACCOS PMS...\n');
 
   // Clear existing data using Prisma client (respecting FK order)
   await prisma.evaluationApproval.deleteMany();
@@ -27,7 +27,7 @@ async function main() {
   await prisma.region.updateMany({ where: { directorId: { not: null } }, data: { directorId: null } });
   await prisma.area.updateMany({ where: { managerId: { not: null } }, data: { managerId: null } });
   await prisma.branch.updateMany({ where: { managerId: { not: null } }, data: { managerId: null } });
-  await prisma.user.deleteMany({ where: { email: { not: 'admin@sako.com' } } });
+  await prisma.user.deleteMany({ where: { email: { not: 'admin@wisdomsaccos.com' } } });
   await prisma.branch.deleteMany();
   await prisma.area.deleteMany();
   await prisma.region.deleteMany();
@@ -83,10 +83,10 @@ async function main() {
   console.log(`✅ MINIMAL DATA SEEDED SUCCESSFULLY!`);
   console.log(`============================================================`);
   console.log(`\n📋 LOGIN CREDENTIALS:`);
-  console.log(`   Admin:              admin@sako.com / admin123`);
+  console.log(`   Admin:              admin@wisdomsaccos.com / admin123`);
   console.log(`   Regional Director:  getachew.lemma@south.gov.et / 1234`);
   console.log(`   Area Manager:       tadesse.woldemariam@hawassa_area.et / 1234`);
-  console.log(`\n⚠️  Use seedGhionSaccos.js to seed full branch + staff data.`);
+  console.log(`\n⚠️  Use seedWisdomSaccos.js to seed full branch + staff data.`);
 }
 
 main()

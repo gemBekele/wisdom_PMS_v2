@@ -181,11 +181,11 @@ async function main() {
   // Admin
   const admin = await prisma.user.create({
     data: {
-      employeeId: 'ADMIN001', name: 'Biruk Assefa', email: 'admin@ghion.et',
+      employeeId: 'ADMIN001', name: 'Biruk Assefa', email: 'admin@wisdomsaccos.com',
       password: hashed, role: 'admin', position: 'CEO', isActive: true,
     },
   });
-  console.log('   ✅ Admin: Biruk Assefa (admin@ghion.et)');
+  console.log('   ✅ Admin: Biruk Assefa (admin@wisdomsaccos.com)');
 
   // Area Manager
   const areaManager = await prisma.user.create({
@@ -218,7 +218,7 @@ async function main() {
   for (const username of staffUsernames) {
     const cleanName = username.replace(/-GNS$/, '').replace(/-/g, ' ');
     const displayName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-    const email = `${username.replace(/-/g, '_').toLowerCase()}@ghion.et`;
+    const email = `${username.replace(/-/g, '_').toLowerCase()}@wisdomsaccos.com`;
     const isSupervisor = supervisorNames.includes(username);
 
     const user = await prisma.user.create({
@@ -533,10 +533,10 @@ async function main() {
   console.log(`   June Balances:      ${juneCount}`);
 
   console.log(`\n📋 LOGIN CREDENTIALS (password: ${PASSWORD}):`);
-  console.log(`   Admin:              admin@ghion.et`);
+  console.log(`   Admin:              admin@wisdomsaccos.com`);
   console.log(`   Area Manager:       am@wolayta.et`);
   console.log(`   Branch Manager:     bm@sodo.et`);
-  console.log(`   ${staffUsers.length} staff users: {username}@ghion.et`);
+  console.log(`   ${staffUsers.length} staff users: {username}@wisdomsaccos.com`);
 
   console.log(`\n📋 STAFF EMAILS:`);
   for (const su of staffUsers.slice(0, 10)) {

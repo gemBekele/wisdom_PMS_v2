@@ -60,7 +60,7 @@ console.log('========================================\n');
 
 // ===== 1. AUTH =====
 console.log('=== 1. AUTHENTICATION ===');
-let loginResult = sshPost('/api/auth/login', { email: 'biruk.assefa@ghion.et', password: 'admin123' });
+let loginResult = sshPost('/api/auth/login', { email: 'biruk.assefa@wisdomsaccos.com', password: 'admin123' });
 test('Login succeeds', () => assertTrue(loginResult.success, 'login'));
 const TOKEN = loginResult.token;
 test('Token returned', () => assertTrue(!!TOKEN, 'token'));
@@ -68,7 +68,7 @@ test('Admin role', () => assertEq(loginResult.data?.role, 'admin', 'role'));
 test('Admin name', () => assertEq(loginResult.data?.name, 'Temesgen', 'name'));
 
 // Wrong password
-let badLogin = sshPost('/api/auth/login', { email: 'biruk.assefa@ghion.et', password: 'wrongpass' });
+let badLogin = sshPost('/api/auth/login', { email: 'biruk.assefa@wisdomsaccos.com', password: 'wrongpass' });
 test('Wrong password rejected', () => assertEq(badLogin.success, false, 'bad login'));
 
 // Protected route without token
@@ -155,7 +155,7 @@ users.data?.forEach(u => { roles[u.role] = (roles[u.role] || 0) + 1; });
 console.log(`  Roles: ${JSON.stringify(roles)}`);
 
 // Admin user check
-let adminUser = users.data?.find(u => u.email === 'biruk.assefa@ghion.et');
+let adminUser = users.data?.find(u => u.email === 'biruk.assefa@wisdomsaccos.com');
 test('Admin user exists', () => assertTrue(!!adminUser, 'admin user'));
 test('Admin has correct role', () => assertEq(adminUser?.role, 'admin', 'admin role'));
 

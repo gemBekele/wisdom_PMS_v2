@@ -19,7 +19,7 @@ router.get('/public-list', getPublicUsersList);
 router.get('/', protect, getUsers);
 router.get('/:id', protect, getUser);
 router.post('/', protect, isAdmin, createUser);
-router.put('/:id', protect, updateUser);
+router.put('/:id', protect, isAdmin, updateUser);
 router.delete('/:id', protect, isAdmin, deleteUser);
 router.put('/:id/reset-password', protect, isAdmin, resetPassword);
 

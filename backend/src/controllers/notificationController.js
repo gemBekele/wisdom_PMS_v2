@@ -32,7 +32,9 @@ const buildNotificationWhere = (user) => {
 // @access  Private
 export const getNotifications = asyncHandler(async (req, res) => {
   const { page = 1, limit = 50, unreadOnly } = req.query;
-  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const pageSize = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+  const skip = (pageNum - 1) * pageSize;
 
   const where = {};
 
@@ -80,7 +82,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
       where,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: parseInt(limit),
+      take: pageSize,
     }),
     prisma.notification.count({ where }),
   ]);

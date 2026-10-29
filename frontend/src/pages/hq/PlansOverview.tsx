@@ -9,24 +9,24 @@ import { Target, Users, TrendingUp, Building2 } from 'lucide-react';
 
 const KPI_COLORS: Record<string, string> = {
   'Account Productivity': '#10b981',
-  'Deposit Mobilization': '#3b82f6',
-  'New Member Registration': '#8b5cf6',
-  'New Account Opening': '#06b6d4',
+  'Deposit Mobilization': '#202289',
+  'New Member Registration': '#ed8722',
+  'New Account Opening': '#cf7310',
   'Share Capital Growth': '#f59e0b',
-  'Mobile Banking Users': '#6366f1',
+  'Mobile Banking Users': '#ed8722',
   'Merchant POS Growth': '#ef4444',
-  'Billers Recruitment': '#f97316',
+  'Billers Recruitment': '#ed8722',
   'Internal Operations': '#6b7280',
   'Loan Saving Deposit': '#059669',
-  'Michu Current Saving': '#2563eb',
-  'Gihon Regular Saving': '#7c3aed',
-  'Mothers Saving': '#db2777',
-  'Young Womens Saving': '#d946ef',
+  'Michu Current Saving': '#171a6b',
+  'Gihon Regular Saving': '#cf7310',
+  'Mothers Saving': '#a3580b',
+  'Young Womens Saving': '#ed8722',
   'Elders Saving': '#ea580c',
   'Children Saving': '#0d9488',
   'Fixed Time Deposit': '#ca8a04',
   'Premium Saving Deposit': '#dc2626',
-  'Special Saving': '#4f46e5',
+  'Special Saving': '#202289',
   'Segment Deposit': '#0891b2',
   'Wadiah IFB Deposit': '#65a30d',
 };
@@ -77,7 +77,7 @@ export function PlansOverview() {
     if (existing) {
       existing.value += plan.target_value;
     } else {
-      acc.push({ name: plan.branch_code, value: plan.target_value, fill: '#3b82f6' });
+      acc.push({ name: plan.branch_code, value: plan.target_value, fill: '#202289' });
     }
     return acc;
   }, []);
@@ -216,7 +216,7 @@ export function PlansOverview() {
                   <Tooltip formatter={(value: number) => value.toLocaleString()} />
                   <Bar dataKey="value" name="Target Value" radius={[4, 4, 0, 0]}>
                     {targetByBranch.map((entry, idx) => (
-                      <Cell key={idx} fill={entry.fill || '#3b82f6'} />
+                      <Cell key={idx} fill={entry.fill || '#202289'} />
                     ))}
                   </Bar>
                 </BarChart>

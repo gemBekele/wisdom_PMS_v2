@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -80,6 +81,7 @@ interface NotificationModalProps {
 }
 
 export function NotificationModal({ open, onOpenChange }: NotificationModalProps) {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -270,7 +272,12 @@ export function NotificationModal({ open, onOpenChange }: NotificationModalProps
             variant="outline"
             className="w-full"
             onClick={() => {
-              window.location.href = selected.link;
+              try {
+                const target = new URL(selected.link, window.location.origin);
+                if (target.origin === window.location.origin && target.pathname.startsWith('/')) {
+                  navigate(target.pathname + target.search + target.hash);
+                }
+              } catch { /* ignore invalid links */ }
             }}
           >
             <ExternalLink className="h-4 w-4 mr-2" />

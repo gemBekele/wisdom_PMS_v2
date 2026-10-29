@@ -13,8 +13,17 @@ const seedAdmin = async () => {
     console.log('✅ Connected to PostgreSQL via Prisma');
 
     // Check if admin exists
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@wisdomsaccos.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'admin123');
+
+    if (!adminPassword || adminPassword.length < 8) {
+      console.error('❌ ADMIN_PASSWORD must be set to at least 8 characters');
+      await prisma.$disconnect();
+      process.exit(1);
+    }
+
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@sako.com' },
+      where: { email: adminEmail },
     });
 
     if (existingAdmin) {
@@ -25,14 +34,14 @@ const seedAdmin = async () => {
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('admin123', salt);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
     // Create admin user
     const admin = await prisma.user.create({
       data: {
         employeeId: 'ADMIN001',
         name: 'System Administrator',
-        email: 'admin@sako.com',
+        email: adminEmail,
         password: hashedPassword,
         role: 'admin',
         position: 'Branch_Manager',
@@ -41,8 +50,8 @@ const seedAdmin = async () => {
     });
 
     console.log('\n✅ Admin user created successfully!');
-    console.log('📧 Email: admin@sako.com');
-    console.log('🔑 Password: admin123');
+    console.log(`📧 Email: ${adminEmail}`);
+    console.log('🔑 Password: set via ADMIN_PASSWORD');
     console.log('\n⚠️  Please change the password after first login!\n');
 
     await prisma.$disconnect();

@@ -20,7 +20,7 @@ const pctBarColor = (v: number) => {
   return 'bg-red-500';
 };
 
-const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#6366f1'];
+const CHART_COLORS = ['#202289', '#10b981', '#f59e0b', '#ef4444', '#ed8722', '#cf7310', '#ed8722', '#ed8722'];
 
 export function BranchPerformance() {
   const { user } = useUser();
@@ -158,7 +158,7 @@ export function BranchPerformance() {
                   <XAxis dataKey="category" tick={{ fontSize: 10 }} angle={-15} textAnchor="end" height={60} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                  <Bar dataKey="target" name="Target" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="target" name="Target" fill="#202289" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="actual" name="Actual" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

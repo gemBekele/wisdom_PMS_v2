@@ -1,4 +1,4 @@
-# SAKO PMS - Technical Documentation
+# Wisdom SACCOS PMS - Technical Documentation
 
 ## Table of Contents
 1. [System Overview](#system-overview)
@@ -18,7 +18,7 @@
 
 ## System Overview
 
-**SAKO Performance Management System (PMS)** is a comprehensive microfinance performance tracking and management platform. It enables hierarchical performance tracking from HQ level down to individual staff members, with automated plan cascading, task management, performance scoring, and CBS (Core Banking System) validation.
+**Wisdom SACCOS Performance Management System (PMS)** is a comprehensive microfinance performance tracking and management platform. It enables hierarchical performance tracking from HQ level down to individual staff members, with automated plan cascading, task management, performance scoring, and CBS (Core Banking System) validation.
 
 ### Key Capabilities
 - **Hierarchical Plan Management**: Cascade plans from HQ → Region → Area → Branch → Staff
@@ -94,7 +94,7 @@ Frontend (React) → API Requests → Backend (Express) → MongoDB
 - `email` (String, unique, required): Email address
 - `password` (String, required, min 6): Hashed password
 - `role` (Enum, required): One of 7 roles:
-  - `SAKO HQ / Admin`
+  - `Wisdom SACCOS HQ / Admin`
   - `Regional Director`
   - `Area Manager`
   - `Branch Manager`
@@ -523,7 +523,7 @@ http://localhost:5000/api
 
 ### Authorization (RBAC)
 **Role Hierarchy** (highest to lowest):
-1. `SAKO HQ / Admin` - Full system access
+1. `Wisdom SACCOS HQ / Admin` - Full system access
 2. `Regional Director` - Regional oversight
 3. `Area Manager` - Area management
 4. `Branch Manager` - Branch management
@@ -846,7 +846,7 @@ frontend/
 PORT=5000
 NODE_ENV=development
 
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/sako-pms?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/wisdom-saccos-pms?retryWrites=true&w=majority
 
 JWT_SECRET=your-secret-key-change-in-production
 JWT_EXPIRE=7d

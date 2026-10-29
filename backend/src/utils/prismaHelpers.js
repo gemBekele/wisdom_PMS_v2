@@ -84,7 +84,7 @@ export const KPI_CATEGORY_TO_ENUM = {
 };
 
 /**
- * Task Type mapping (Ghion SACCOS)
+ * Task Type mapping (Wisdom SACCOS)
  * Maps display names and legacy names to new enum values
  */
 export const TASK_TYPE_TO_ENUM = {
@@ -270,6 +270,12 @@ export const AUDIT_ACTION_TO_ENUM = {
     'Edit Approved': 'Edit_Approved',
     'Edit Rejected': 'Edit_Rejected',
     'Balance Source Updated': 'Balance_Source_Updated',
+    'Plan Created': 'Plan_Created',
+    'Bulk Mapping Upload': 'Bulk_Mapping_Upload',
+    'Baseline Balance Import': 'Baseline_Balance_Import',
+    'Baseline Activation': 'Baseline_Activation',
+    'Product Mapping': 'Product_Mapping',
+    'Transaction': 'Transaction',
 };
 
 /**

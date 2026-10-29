@@ -130,7 +130,7 @@ export function BranchManagerDashboard() {
           <TopBranchesBarChart
             title={`Top Staff Members by ${selectedKPI}`}
             data={analytical.topPerformers}
-            barColor="#f97316"
+            barColor="#ed8722"
           />
         </div>
       </div>

@@ -46,10 +46,10 @@ const listUsers = async () => {
     console.log(`\nTotal Users: ${users.length}\n`);
 
     // Show default admin credentials
-    const admin = users.find(u => u.email === 'admin@sako.com' || u.role === 'admin');
+    const admin = users.find(u => u.email === 'admin@wisdomsaccos.com' || u.role === 'admin');
     if (admin) {
       console.log('🔑 Default Admin Credentials:');
-      console.log('   Email: admin@sako.com');
+      console.log('   Email: admin@wisdomsaccos.com');
       console.log('   Password: admin123');
       console.log('   ⚠️  Please change password after first login!\n');
     }

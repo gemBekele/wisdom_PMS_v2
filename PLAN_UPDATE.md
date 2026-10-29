@@ -168,7 +168,7 @@ Map all CBS product names to KPI categories:
 - [x] All 118 tests passing
 - [x] Frontend builds clean (tsc + vite build)
 - [x] Database migrations applied (12 migrations)
-- [x] Committed and pushed to Ghion-Saccos branch
+- [x] Committed and pushed to Wisdom-Saccos branch
 
 ### Phase 5: Align Task Types with Plan
 - [x] Add 12 product categories to TaskType enum (Loan_Saving_Deposit, Michu_Current_Saving, etc.)
@@ -196,7 +196,7 @@ Map all CBS product names to KPI categories:
 **Backend Tasks**:
 - [x] Add Team model to Prisma schema with User ↔ Team relation
 - [x] Create and apply Prisma migration
-- [ ] Create migration to drop sub_teams table (if coming from Ghion-Saccos)
+- [ ] Create migration to drop sub_teams table (if coming from Wisdom-Saccos)
 - [x] Create `teamController.js` — CRUD for Team only
 - [x] Create `teamRoutes.js` — routes protected by isBranchManager
 - [x] Register routes in `server.js`

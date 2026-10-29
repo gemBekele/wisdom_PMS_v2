@@ -71,7 +71,7 @@ async function clearAllData() {
 }
 
 async function main() {
-  console.log('🌱 Seeding Ghion SACCOS...\n');
+  console.log('🌱 Seeding Wisdom SACCOS...\n');
 
   await clearAllData();
   console.log('✅ Cleared all existing data\n');
@@ -92,34 +92,34 @@ async function main() {
 
   // ===== USERS =====
   const admin = await prisma.user.create({
-    data: { employeeId: 'ADMIN001', name: 'Temesgen', email: 'biruk.assefa@ghion.et', password: hashed, role: 'admin', position: 'CEO', isActive: true },
+    data: { employeeId: 'ADMIN001', name: 'Temesgen', email: 'biruk.assefa@wisdomsaccos.com', password: hashed, role: 'admin', position: 'CEO', isActive: true },
   });
 
   const am = await prisma.user.create({
-    data: { employeeId: 'AM-WOL-001', name: 'Abebech G/Hiwot', email: 'abebech.ghiwot@ghion.et', password: hashed, role: 'areaManager', position: 'Area_Manager', areaId: area.id, isActive: true },
+    data: { employeeId: 'AM-WOL-001', name: 'Abebech G/Hiwot', email: 'abebech.ghiwot@wisdomsaccos.com', password: hashed, role: 'areaManager', position: 'Area_Manager', areaId: area.id, isActive: true },
   });
   await prisma.area.update({ where: { id: area.id }, data: { managerId: am.id } });
 
   const bmBole = await prisma.user.create({
-    data: { employeeId: 'BM-WOL-001', name: 'Meron Kebede', email: 'meron.kebede@ghion.et', password: hashed, role: 'branchManager', position: 'Branch_Manager', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
+    data: { employeeId: 'BM-WOL-001', name: 'Meron Kebede', email: 'meron.kebede@wisdomsaccos.com', password: hashed, role: 'branchManager', position: 'Branch_Manager', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
   });
   await prisma.branch.update({ where: { id: sodoBranch.id }, data: { managerId: bmBole.id } });
 
   const supBoleOps = await prisma.user.create({
-    data: { employeeId: 'SUP-WOL-OPS', name: 'Henok Tadesse', email: 'henok.tadesse@ghion.et', password: hashed, role: 'supervisor', position: 'Operation_Supervisor', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
+    data: { employeeId: 'SUP-WOL-OPS', name: 'Henok Tadesse', email: 'henok.tadesse@wisdomsaccos.com', password: hashed, role: 'supervisor', position: 'Operation_Supervisor', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
   });
   const supBoleCR = await prisma.user.create({
-    data: { employeeId: 'SUP-WOL-CR', name: 'Tsion Haile', email: 'tsion.haile@ghion.et', password: hashed, role: 'supervisor', position: 'Customer_Relationship_Supervisor', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
+    data: { employeeId: 'SUP-WOL-CR', name: 'Tsion Haile', email: 'tsion.haile@wisdomsaccos.com', password: hashed, role: 'supervisor', position: 'Customer_Relationship_Supervisor', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, isActive: true },
   });
 
   const staffBolCS1 = await prisma.user.create({
-    data: { employeeId: 'STF-WOL-CS1', name: 'Lemlem Wondimu', email: 'lemlem.wondimu@ghion.et', password: hashed, role: 'staff', position: 'Customer_Service_Officer_I', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleOps.id, isActive: true },
+    data: { employeeId: 'STF-WOL-CS1', name: 'Lemlem Wondimu', email: 'lemlem.wondimu@wisdomsaccos.com', password: hashed, role: 'staff', position: 'Customer_Service_Officer_I', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleOps.id, isActive: true },
   });
   const staffBolCS2 = await prisma.user.create({
-    data: { employeeId: 'STF-WOL-CS2', name: 'Yonas Alemu', email: 'yonas.alemu@ghion.et', password: hashed, role: 'staff', position: 'Customer_Service_Officer_II', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleOps.id, isActive: true },
+    data: { employeeId: 'STF-WOL-CS2', name: 'Yonas Alemu', email: 'yonas.alemu@wisdomsaccos.com', password: hashed, role: 'staff', position: 'Customer_Service_Officer_II', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleOps.id, isActive: true },
   });
   const staffBolCR = await prisma.user.create({
-    data: { employeeId: 'STF-WOL-CR1', name: 'Birtukan Mamo', email: 'birtukan.mamo@ghion.et', password: hashed, role: 'staff', position: 'Customer_Relationship_Officer_I', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleCR.id, isActive: true },
+    data: { employeeId: 'STF-WOL-CR1', name: 'Birtukan Mamo', email: 'birtukan.mamo@wisdomsaccos.com', password: hashed, role: 'staff', position: 'Customer_Relationship_Officer_I', branchId: sodoBranch.id, branch_code: 'WOLAYTA_SODO', areaId: area.id, supervisorId: supBoleCR.id, isActive: true },
   });
 
   console.log('✅ 8 users created with Ethiopian names and supervisor assignments');
@@ -370,17 +370,17 @@ async function main() {
 
   // ===== CREDENTIALS =====
   console.log(`\n============================================================`);
-  console.log(`✅ GHION SACCOS SEED COMPLETE!`);
+  console.log(`✅ WISDOM SACCOS SEED COMPLETE!`);
   console.log(`============================================================`);
   console.log(`\n📋 LOGIN CREDENTIALS (password: ${PASSWORD}):\n`);
-  console.log(`  Admin (CEO):         biruk.assefa@ghion.et`);
-  console.log(`  Area Manager:        abebech.ghiwot@ghion.et`);
-  console.log(`  BM Bole:             meron.kebede@ghion.et`);
-  console.log(`  Sup Ops (Bole):      henok.tadesse@ghion.et`);
-  console.log(`  Sup CR (Bole):       tsion.haile@ghion.et`);
-  console.log(`  CS Officer I (Bole): lemlem.wondimu@ghion.et`);
-  console.log(`  CS Officer II (Bole): yonas.alemu@ghion.et`);
-  console.log(`  CR Officer (Bole):   birtukan.mamo@ghion.et`);
+  console.log(`  Admin (CEO):         biruk.assefa@wisdomsaccos.com`);
+  console.log(`  Area Manager:        abebech.ghiwot@wisdomsaccos.com`);
+  console.log(`  BM Bole:             meron.kebede@wisdomsaccos.com`);
+  console.log(`  Sup Ops (Bole):      henok.tadesse@wisdomsaccos.com`);
+  console.log(`  Sup CR (Bole):       tsion.haile@wisdomsaccos.com`);
+  console.log(`  CS Officer I (Bole): lemlem.wondimu@wisdomsaccos.com`);
+  console.log(`  CS Officer II (Bole): yonas.alemu@wisdomsaccos.com`);
+  console.log(`  CR Officer (Bole):   birtukan.mamo@wisdomsaccos.com`);
 
   console.log(`\n📊 Summary:`);
   console.log(`  Area: 1 (Hawassa)`);

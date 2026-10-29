@@ -222,6 +222,12 @@ enum AuditAction {
   Edit_Approved               @map("Edit Approved")
   Edit_Rejected               @map("Edit Rejected")
   Balance_Source_Updated      @map("Balance Source Updated")
+  Plan_Created                @map("Plan Created")
+  Bulk_Mapping_Upload         @map("Bulk Mapping Upload")
+  Baseline_Balance_Import     @map("Baseline Balance Import")
+  Baseline_Activation         @map("Baseline Activation")
+  Product_Mapping             @map("Product Mapping")
+  Transaction
 }
 
 enum AuditEntityType {
@@ -234,6 +240,8 @@ enum AuditEntityType {
   Framework
   System
   SystemSetting
+  JuneBalance
+  ProductKpiMapping
 }
 
 // ============== MODELS ==============
@@ -283,6 +291,8 @@ model User {
   notifications           Notification[]       @relation("NotificationRecipient")
 
   @@index([branchId])
+  @@index([branch_code])
+  @@index([branchId, isActive, role])
   @@index([areaId])
   @@index([role])
   @@index([position])
@@ -380,6 +390,7 @@ model Plan {
   @@index([branch_code, product_category, period])
   @@index([branch_code, period])
   @@index([status])
+  @@index([status, period])
   @@index([branchId])
   @@map("plans")
 }
@@ -410,6 +421,7 @@ model StaffPlan {
   updatedAt          DateTime    @updatedAt
 
   @@index([userId, kpi_category, period])
+  @@index([userId, status, period])
   @@index([branch_code, period])
   @@index([branchPlanId])
   @@index([branchId])
@@ -455,7 +467,10 @@ model AccountMapping {
   loanSchedules LoanSchedule[]
 
   @@index([mappedToId, branchId, status])
-  @@index([accountNumber])
+  @@index([mappedToId, status])
+  @@index([accountType, status, branchId])
+  @@index([branchId, updatedAt])
+  @@index([product])
   @@index([branchId])
   @@index([isProductive])
   @@map("account_mappings")
@@ -476,6 +491,7 @@ model LoanSchedule {
   updatedAt       DateTime          @updatedAt
 
   @@index([accountId, expectedDate])
+  @@index([accountId, status, expectedDate])
   @@index([status])
   @@index([expectedDate])
   @@map("loan_schedules")
@@ -499,7 +515,7 @@ model NplSnapshot {
   par90Count      Int      @default(0)
   createdAt       DateTime @default(now())
 
-  @@index([branchId, snapshotDate])
+  @@unique([branchId, snapshotDate])
   @@index([snapshotDate])
   @@map("npl_snapshots")
 }
@@ -539,6 +555,10 @@ model DailyTask {
   @@index([branchId, taskDate])
   @@index([approvalStatus, branchId])
   @@index([cbsValidated, taskDate])
+  @@index([branchId, approvalStatus, createdAt])
+  @@index([submittedById, approvalStatus, createdAt])
+  @@index([accountId, approvalStatus, taskDate])
+  @@index([cbsValidationId])
   @@map("daily_tasks")
 }
 
@@ -557,6 +577,7 @@ model TaskApproval {
 
   @@index([taskId])
   @@index([approverId])
+  @@index([approverId, status])
   @@map("task_approvals")
 }
 
@@ -651,6 +672,9 @@ model CBSValidation {
 
   @@index([branchId, validationDate])
   @@index([status])
+  @@index([validationDate])
+  @@index([createdAt])
+  @@index([branchId, createdAt])
   @@map("cbs_validations")
 }
 
@@ -695,6 +719,7 @@ model JuneBalance {
   @@index([accountNumber, baseline_period])
   @@index([branch_code])
   @@index([baseline_period, is_active])
+  @@index([is_active])
   @@map("june_balances")
 }
 
@@ -754,6 +779,7 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@index([entityType, entityId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

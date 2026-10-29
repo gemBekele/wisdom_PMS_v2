@@ -28,13 +28,13 @@ async function main() {
 
         console.log('\nNOTE: Passwords are hashed in the database and cannot be retrieved in plain text.');
         console.log('Refer to the seed script (src/scripts/seedAllUsers.js) for default testing passwords:');
-        console.log('- admin@sako.com | admin123');
-        console.log('- regional@sako.com | regional123');
-        console.log('- areamanager@sako.com | area123');
-        console.log('- branchmanager@sako.com | branch123');
-        console.log('- linemanager@sako.com | line123');
-        console.log('- subteam@sako.com | subteam123');
-        console.log('- staff@sako.com | staff123');
+        console.log('- admin@wisdomsaccos.com | admin123');
+        console.log('- regional@wisdomsaccos.com | regional123');
+        console.log('- areamanager@wisdomsaccos.com | area123');
+        console.log('- branchmanager@wisdomsaccos.com | branch123');
+        console.log('- linemanager@wisdomsaccos.com | line123');
+        console.log('- subteam@wisdomsaccos.com | subteam123');
+        console.log('- staff@wisdomsaccos.com | staff123');
 
     } catch (error) {
         console.error('Error fetching users:', error);

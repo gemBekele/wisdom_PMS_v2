@@ -39,14 +39,28 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = {
-    'planFile': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.ms-excel'],
-    'cbsFile': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'],
-    'evidence': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
-    'file': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.ms-excel'],
-    'mappingFile': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.ms-excel'],
-  };
+  const spreadsheetMimes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/csv',
+    'application/csv',
+    'text/plain',
+    'application/octet-stream',
+  ];
+  const spreadsheetExts = ['.csv', '.xlsx', '.xls'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  const isSpreadsheetField = ['planFile', 'cbsFile', 'file', 'mappingFile'].includes(file.fieldname);
 
+  if (isSpreadsheetField) {
+    if (spreadsheetExts.includes(ext) && spreadsheetMimes.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(new Error('Invalid file type. Upload a CSV or Excel file.'), false);
+  }
+
+  const allowedMimes = {
+    'evidence': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+  };
   if (allowedMimes[file.fieldname]?.includes(file.mimetype)) {
     cb(null, true);
   } else {

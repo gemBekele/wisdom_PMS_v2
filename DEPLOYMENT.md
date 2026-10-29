@@ -1,20 +1,20 @@
-# SAKO PMS - Production Deployment Guide
+# Wisdom SACCOS PMS - Production Deployment Guide
 
 ## Database Setup (PostgreSQL)
 
 ### 1. Database Created
-✅ Database `sako_pms` created successfully
+✅ Database `wisdom_saccos_pms` created successfully
 ✅ Migrations applied - All tables created
-✅ Admin user seeded - admin@sako.com / admin123
+✅ Admin user seeded - admin@wisdomsaccos.com / admin123
 
 ### 2. Connection Details
 ```
-Database: sako_pms
+Database: wisdom_saccos_pms
 User: postgres
 Password: postgres
 Host: localhost
 Port: 5432
-URL: postgresql://postgres:postgres@localhost:5432/sako_pms
+URL: postgresql://postgres:postgres@localhost:5432/wisdom_saccos_pms
 ```
 
 ## Backend Configuration
@@ -23,7 +23,7 @@ URL: postgresql://postgres:postgres@localhost:5432/sako_pms
 ```env
 PORT=5000
 NODE_ENV=production
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sako_pms?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wisdom_saccos_pms?schema=public"
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRE=7d
 CORS_ORIGIN=https://your-domain.com
@@ -60,7 +60,7 @@ npm install -g pm2
 2. **Start backend with PM2:**
 ```bash
 cd backend
-pm2 start src/server.js --name "sako-pms-backend"
+pm2 start src/server.js --name "wisdom-saccos-pms-backend"
 pm2 save
 pm2 startup
 ```
@@ -98,7 +98,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sako_pms
+      POSTGRES_DB: wisdom_saccos_pms
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -107,7 +107,7 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/sako_pms
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/wisdom_saccos_pms
       JWT_SECRET: your-secret-key
       NODE_ENV: production
     ports:
@@ -141,7 +141,7 @@ volumes:
 4. Deploy
 
 #### Heroku
-1. Create app: `heroku create sako-pms`
+1. Create app: `heroku create wisdom-saccos-pms`
 2. Add PostgreSQL: `heroku addons:create heroku-postgresql:mini`
 3. Deploy: `git push heroku main`
 
@@ -159,10 +159,10 @@ volumes:
 
 ```bash
 # Create backup
-pg_dump -U postgres sako_pms > backup.sql
+pg_dump -U postgres wisdom_saccos_pms > backup.sql
 
 # Restore backup
-psql -U postgres sako_pms < backup.sql
+psql -U postgres wisdom_saccos_pms < backup.sql
 ```
 
 ## Troubleshooting
@@ -176,7 +176,7 @@ sudo service postgresql status
 sudo service postgresql restart
 
 # Check connection
-psql -U postgres -d sako_pms -c "SELECT 1;"
+psql -U postgres -d wisdom_saccos_pms -c "SELECT 1;"
 ```
 
 ### Prisma Issues
@@ -211,9 +211,9 @@ cd frontend && npm run build && serve -s dist
 ## ✅ Summary - What Was Done
 
 1. ✅ Converted all Mongoose scripts to Prisma
-2. ✅ Created PostgreSQL database `sako_pms`
+2. ✅ Created PostgreSQL database `wisdom_saccos_pms`
 3. ✅ Applied Prisma migrations (all tables created)
-4. ✅ Seeded admin user (admin@sako.com / admin123)
+4. ✅ Seeded admin user (admin@wisdomsaccos.com / admin123)
 5. ✅ Removed MongoDB/mongoose dependencies
 6. ✅ Added Prisma CLI scripts to package.json
 7. ✅ Tested backend - working correctly

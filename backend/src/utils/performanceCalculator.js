@@ -86,7 +86,6 @@ export const buildTaskAchievementFilter = async ({ taskTypes, userId, submittedB
  */
 export const calculateIncrementalGrowth = async (userId, branch_code, kpi_category, period, product_category) => {
   try {
-    // Get all mapped accounts for this user (exclude Loan type)
     const mappedAccounts = await prisma.accountMapping.findMany({
       where: {
         mappedToId: userId,
@@ -94,34 +93,46 @@ export const calculateIncrementalGrowth = async (userId, branch_code, kpi_catego
         current_balance: { gte: 1000 },
         accountType: { not: 'Loan' },
       },
+      select: { accountNumber: true, current_balance: true, product: true, june_balance: true },
     });
 
-    let totalGrowth = 0;
+    if (mappedAccounts.length === 0) return 0;
 
+    const accountNumbers = mappedAccounts.map(a => a.accountNumber).filter(Boolean);
+    const baselines = accountNumbers.length
+      ? await prisma.juneBalance.findMany({
+          where: {
+            is_active: true,
+            OR: [
+              { accountNumber: { in: accountNumbers } },
+              { account_id: { in: accountNumbers } },
+            ],
+          },
+          select: { accountNumber: true, account_id: true, june_balance: true },
+        })
+      : [];
+
+    const baselineByAccount = new Map();
+    for (const baseline of baselines) {
+      if (baseline.accountNumber) baselineByAccount.set(baseline.accountNumber, baseline.june_balance);
+      if (baseline.account_id) baselineByAccount.set(baseline.account_id, baseline.june_balance);
+    }
+
+    let totalGrowth = 0;
     for (const account of mappedAccounts) {
-      // If filtering by product category, check account's product mapping
       if (product_category) {
         const acctProductCat = CBS_PRODUCT_TO_CATEGORY[account.product] || null;
         if (acctProductCat !== product_category) continue;
       }
 
-      const juneBalance = await prisma.juneBalance.findFirst({
-        where: {
-          OR: [
-            { account_id: account.accountNumber },
-            { accountNumber: account.accountNumber },
-          ],
-          is_active: true,
-        },
-      });
+      // Skip accounts without a baseline instead of counting their whole balance.
+      const baseline = baselineByAccount.get(account.accountNumber);
+      const june_balance = baseline ?? account.june_balance;
+      if (june_balance === null || june_balance === undefined) continue;
 
-      const june_balance = juneBalance?.june_balance || 0;
       const current_balance = account.current_balance || 0;
-
       const growth = current_balance - june_balance;
-      if (growth > 0) {
-        totalGrowth += growth;
-      }
+      if (growth > 0) totalGrowth += growth;
     }
 
     return totalGrowth;
@@ -156,6 +167,13 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
 
     const kpiScores = {};
     let totalScorePoints = 0;
+
+    const config = await prisma.kpiFrameworkConfig.findMany();
+    const weights = {};
+    for (const c of config) weights[c.kpiId] = c.weight;
+    if (Object.keys(weights).length === 0) {
+      Object.assign(weights, { 'Deposit_Mobilization': 40, 'Collection_Rate': 30, 'Portfolio_Quality': 30 });
+    }
 
     // First pass: calculate product-level achievements for Deposit Mobilization
     const productAchievements = {};
@@ -214,20 +232,6 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
       // Calculate percentage and score
       const percent = individual_target > 0 ? (actualGrowth / individual_target) * 100 : 0;
 
-      // KPI weight (sums to 100, then scaled to 85% of final score)
-      const config = await prisma.kpiFrameworkConfig.findMany();
-      const weights = {};
-      for (const c of config) {
-        weights[c.kpiId] = c.weight;
-      }
-      // Fallback if no config exists yet
-      if (Object.keys(weights).length === 0) {
-        const defaultWeights = {
-          'Deposit_Mobilization': 40, 'Collection_Rate': 30, 'Portfolio_Quality': 30,
-        };
-        Object.assign(weights, defaultWeights);
-      }
-
       const weight = weights[kpi_category] || 0;
       const categoryScore = (percent / 100) * weight;
 
@@ -273,8 +277,15 @@ export const calculateKPIScore = async (userId, branch_code, period) => {
       totalScorePoints += categoryScore;
     }
 
-    // Total KPI score (85% weight)
-    const kpiTotalScore = (totalScorePoints / 100) * 85;
+    // Normalize over KPIs that have plans so the KPI portion maxes at 85.
+    const presentWeight = Object.values(kpiScores).reduce((sum, entry) => sum + (entry.weight || 0), 0);
+    let kpiTotalScore = 0;
+    if (presentWeight > 0) {
+      for (const entry of Object.values(kpiScores)) {
+        entry.score = Math.round(((entry.percent / 100) * (entry.weight / presentWeight) * 85) * 100) / 100;
+        kpiTotalScore += entry.score;
+      }
+    }
 
     return {
       kpiScores,
@@ -382,10 +393,10 @@ export const calculateBranchKPIScore = async (branch_code, period) => {
  * Calculate rating based on final score
  */
 export const calculateRating = (finalScore) => {
-  if (finalScore >= 120) return 'Outstanding';
-  if (finalScore >= 100) return 'Exceeds_Expectations';
-  if (finalScore >= 90) return 'Meets_Expectations';
-  if (finalScore >= 80) return 'Needs_Improvement';
+  if (finalScore >= 90) return 'Outstanding';
+  if (finalScore >= 80) return 'Exceeds_Expectations';
+  if (finalScore >= 70) return 'Meets_Expectations';
+  if (finalScore >= 60) return 'Needs_Improvement';
   return 'Unsatisfactory';
 };
 

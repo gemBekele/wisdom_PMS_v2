@@ -440,12 +440,28 @@ export const markInstallmentPaid = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { paidAmount, paidDate } = req.body;
 
-  const schedule = await prisma.loanSchedule.findUnique({ where: { id } });
+  const schedule = await prisma.loanSchedule.findUnique({
+    where: { id },
+    include: { account: { select: { id: true, branchId: true } } },
+  });
   if (!schedule) {
     return res.status(404).json({ success: false, message: 'Installment not found' });
   }
 
-  const amount = paidAmount || schedule.expectedAmount;
+  if (req.user.role !== 'admin' && req.user.branchId && schedule.account?.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Installment is outside your branch' });
+  }
+
+  const amount = paidAmount === undefined ? schedule.expectedAmount : Number(paidAmount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return res.status(400).json({ success: false, message: 'paidAmount must be a positive number' });
+  }
+
+  const paymentDate = paidDate ? new Date(paidDate) : new Date();
+  if (Number.isNaN(paymentDate.getTime())) {
+    return res.status(400).json({ success: false, message: 'Invalid paidDate' });
+  }
+
   const newStatus = amount >= schedule.expectedAmount ? 'Paid' : 'Partial';
 
   const updated = await prisma.loanSchedule.update({
@@ -453,7 +469,7 @@ export const markInstallmentPaid = asyncHandler(async (req, res) => {
     data: {
       paidAmount: amount,
       status: newStatus,
-      paidDate: paidDate ? new Date(paidDate) : new Date(),
+      paidDate: paymentDate,
       daysPastDue: 0,
     },
   });

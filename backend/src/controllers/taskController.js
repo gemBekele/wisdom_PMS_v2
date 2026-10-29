@@ -232,8 +232,10 @@ export const getTasks = asyncHandler(async (req, res) => {
   }
 
   if (status) where.mappingStatus = MAPPING_STATUS_TO_ENUM[status] || status;
-  if (branchId) where.branchId = branchId;
-  if (submittedBy) where.submittedById = submittedBy;
+  if (req.user.role === 'admin') {
+    if (branchId) where.branchId = branchId;
+    if (submittedBy) where.submittedById = submittedBy;
+  }
   if (approvalStatus) where.approvalStatus = APPROVAL_STATUS_TO_ENUM[approvalStatus] || approvalStatus;
 
   let isPendingApprovalByMe = false;
@@ -270,6 +272,11 @@ export const getTasks = asyncHandler(async (req, res) => {
     };
   }
 
+  const requestedLimit = parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 500) : 200;
+  const requestedPage = parseInt(req.query.page, 10);
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
   let tasks = await prisma.dailyTask.findMany({
     where,
     include: {
@@ -279,6 +286,8 @@ export const getTasks = asyncHandler(async (req, res) => {
       approvalChain: { include: { approver: { select: { id: true, name: true, position: true } } } },
     },
     orderBy: { createdAt: 'desc' },
+    take: limit,
+    skip: (page - 1) * limit,
   });
 
   if (isPendingApprovalByMe) {
@@ -329,6 +338,14 @@ export const getTask = asyncHandler(async (req, res) => {
       success: false,
       message: 'Task not found',
     });
+  }
+
+  const isOwner = task.submittedById === req.user.id;
+  if (req.user.role === 'staff' && !isOwner) {
+    return res.status(403).json({ success: false, message: 'Not authorized to view this task' });
+  }
+  if (['branchManager', 'supervisor'].includes(req.user.role) && !isOwner && task.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Task is outside your branch' });
   }
 
   res.status(200).json({

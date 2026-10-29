@@ -1,4 +1,4 @@
-# Sacko-PMS: Complete System Workflow
+# Wisdom-PMS: Complete System Workflow
 
 ## 1. Organizational Hierarchy
 

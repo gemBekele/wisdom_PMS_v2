@@ -25,7 +25,7 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
       user: { select: { id: true, name: true, email: true, role: true } },
     },
     orderBy: { createdAt: 'desc' },
-    take: parseInt(limit),
+    take: Math.min(Math.max(parseInt(limit, 10) || 100, 1), 500),
   });
 
   res.status(200).json({

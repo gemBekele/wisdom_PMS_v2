@@ -4,6 +4,26 @@ import { logAudit } from '../utils/auditLogger.js';
 import { normalizeRole } from '../utils/roleNormalizer.js';
 import { hashPassword, POSITION_TO_ENUM, POSITION_MAP } from '../utils/prismaHelpers.js';
 
+const userSafeSelect = {
+  id: true, employeeId: true, name: true, email: true, role: true,
+  branchId: true, branch_code: true, areaId: true, position: true,
+  isActive: true, supervisorId: true, teamId: true, createdAt: true, updatedAt: true,
+  branch: { select: { id: true, name: true, code: true } },
+  area: { select: { id: true, name: true } },
+};
+
+const canAccessUser = (actor, target) => {
+  const actorRole = normalizeRole(actor.role);
+  if (actorRole === 'admin') return true;
+  if (target.id === actor.id) return true;
+  if (actorRole === 'areaManager') return !!actor.areaId && target.areaId === actor.areaId;
+  if (actorRole === 'branchManager' || actorRole === 'supervisor') {
+    if (actor.branchId && target.branchId) return actor.branchId === target.branchId;
+    if (actor.branch_code && target.branch_code) return actor.branch_code === target.branch_code;
+  }
+  return false;
+};
+
 // @desc    Get public list of active users for login dropdown
 // @route   GET /api/users/public-list
 // @access  Public
@@ -73,17 +93,16 @@ export const getUsers = asyncHandler(async (req, res) => {
       where.role = role;
     }
   }
-  if (branchId) where.branchId = branchId;
-  if (branch_code) where.branch_code = branch_code;
-  if (isActive !== undefined) where.isActive = isActive === 'true';
+  if (userRole === 'admin') {
+    if (branchId) where.branchId = branchId;
+    if (branch_code) where.branch_code = branch_code;
+  }
   if (supervisorId) where.supervisorId = supervisorId;
+  if (isActive !== undefined) where.isActive = isActive === 'true';
 
   const users = await prisma.user.findMany({
     where,
-    include: {
-      branch: { select: { id: true, name: true, code: true } },
-      area: { select: { id: true, name: true } },
-    },
+    select: userSafeSelect,
     orderBy: { createdAt: 'desc' },
   });
 
@@ -108,16 +127,20 @@ export const getUsers = asyncHandler(async (req, res) => {
 export const getUser = asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.params.id },
-    include: {
-      branch: { select: { id: true, name: true, code: true } },
-      area: { select: { id: true, name: true } },
-    },
+    select: userSafeSelect,
   });
 
   if (!user) {
     return res.status(404).json({
       success: false,
       message: 'User not found',
+    });
+  }
+
+  if (!canAccessUser(req.user, user)) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to view this user',
     });
   }
 
@@ -231,7 +254,15 @@ const canCreateRole = (creatorRole, targetRole) => {
 // @route   POST /api/users
 // @access  Private
 export const createUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role, position, branch_code, employeeId, branchId, areaId } = req.body;
+  const { name, email, password, role, position, branch_code, employeeId, branchId, areaId, supervisorId } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ success: false, message: 'Name, email and password are required' });
+  }
+
+  if (String(password).length < 8) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+  }
 
   if (!position || position.trim() === '') {
     return res.status(400).json({
@@ -260,19 +291,28 @@ export const createUser = asyncHandler(async (req, res) => {
   // Auto-populate areaId/branch_code from branch if not provided
   let resolvedAreaId = areaId || null;
   let resolvedBranchCode = branch_code || null;
-  const resolvedBranchId = branchId || req.user.branchId;
+  let resolvedBranchId = branchId || req.user.branchId || null;
+
+  if (!resolvedBranchId && resolvedBranchCode) {
+    const branchByCode = await prisma.branch.findUnique({
+      where: { code: String(resolvedBranchCode).toUpperCase() },
+      select: { id: true, areaId: true, code: true },
+    });
+    if (branchByCode) {
+      resolvedBranchId = branchByCode.id;
+      resolvedBranchCode = branchByCode.code;
+      if (!resolvedAreaId) resolvedAreaId = branchByCode.areaId;
+    }
+  }
+
   if (resolvedBranchId) {
-    try {
-      const branch = await prisma.branch.findUnique({
-        where: { id: resolvedBranchId },
-        select: { areaId: true, code: true },
-      });
-      if (branch) {
-        if (!resolvedAreaId) resolvedAreaId = branch.areaId;
-        if (!resolvedBranchCode) resolvedBranchCode = branch.code;
-      }
-    } catch (e) {
-      console.error('Failed to resolve branch area:', e.message);
+    const branch = await prisma.branch.findUnique({
+      where: { id: resolvedBranchId },
+      select: { areaId: true, code: true },
+    });
+    if (branch) {
+      if (!resolvedAreaId) resolvedAreaId = branch.areaId;
+      if (!resolvedBranchCode) resolvedBranchCode = branch.code;
     }
   }
 
@@ -282,6 +322,20 @@ export const createUser = asyncHandler(async (req, res) => {
       success: false,
       message: 'branch_code is required for branch-level users',
     });
+  }
+
+  let resolvedSupervisorId = supervisorId || null;
+  if (resolvedSupervisorId) {
+    const supervisor = await prisma.user.findUnique({
+      where: { id: resolvedSupervisorId },
+      select: { id: true, branchId: true, branch_code: true, isActive: true },
+    });
+    if (!supervisor || !supervisor.isActive) {
+      return res.status(400).json({ success: false, message: 'Supervisor not found or inactive' });
+    }
+    if (resolvedBranchId && supervisor.branchId && supervisor.branchId !== resolvedBranchId) {
+      return res.status(400).json({ success: false, message: 'Supervisor must belong to the same branch' });
+    }
   }
 
   const hashedPassword = await hashPassword(password);
@@ -299,8 +353,10 @@ export const createUser = asyncHandler(async (req, res) => {
       employeeId: employeeId || email.split('@')[0],
       branchId: resolvedBranchId,
       areaId: resolvedAreaId,
+      supervisorId: resolvedSupervisorId,
       isActive: true,
     },
+    select: userSafeSelect,
   });
 
   await logAudit(
@@ -338,28 +394,76 @@ export const createUser = asyncHandler(async (req, res) => {
 export const updateUser = asyncHandler(async (req, res) => {
   const existingUser = await prisma.user.findUnique({
     where: { id: req.params.id },
+    select: { id: true, role: true, branchId: true, areaId: true, branch_code: true },
   });
 
   if (!existingUser) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
+    return res.status(404).json({ success: false, message: 'User not found' });
   }
 
-  const updateData = { ...req.body };
+  const allowedFields = ['name', 'email', 'employeeId', 'role', 'position', 'branchId', 'branch_code', 'areaId', 'supervisorId', 'isActive', 'teamId'];
+  const updateData = {};
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) updateData[field] = req.body[field];
+  }
 
-  if (updateData.password) {
-    updateData.password = await hashPassword(updateData.password);
+  if (req.body.password) {
+    if (String(req.body.password).length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    }
+    updateData.password = await hashPassword(req.body.password);
+  }
+
+  if (updateData.role) {
+    const validRoles = ['admin', 'areaManager', 'branchManager', 'supervisor', 'staff'];
+    updateData.role = normalizeRole(updateData.role);
+    if (!validRoles.includes(updateData.role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role' });
+    }
   }
 
   if (updateData.position) {
     updateData.position = POSITION_TO_ENUM[updateData.position] || updateData.position;
   }
 
+  if (updateData.supervisorId) {
+    if (updateData.supervisorId === req.params.id) {
+      return res.status(400).json({ success: false, message: 'A user cannot be their own supervisor' });
+    }
+    const supervisor = await prisma.user.findUnique({
+      where: { id: updateData.supervisorId },
+      select: { id: true, isActive: true },
+    });
+    if (!supervisor || !supervisor.isActive) {
+      return res.status(400).json({ success: false, message: 'Supervisor not found or inactive' });
+    }
+  }
+
+  if (updateData.branch_code !== undefined && !updateData.branchId) {
+    const branch = await prisma.branch.findUnique({
+      where: { code: String(updateData.branch_code).toUpperCase() },
+      select: { id: true, code: true, areaId: true },
+    });
+    if (branch) {
+      updateData.branchId = branch.id;
+      updateData.branch_code = branch.code;
+      if (!updateData.areaId) updateData.areaId = branch.areaId;
+    }
+  } else if (updateData.branchId) {
+    const branch = await prisma.branch.findUnique({
+      where: { id: updateData.branchId },
+      select: { code: true, areaId: true },
+    });
+    if (branch) {
+      updateData.branch_code = branch.code;
+      if (!updateData.areaId) updateData.areaId = branch.areaId;
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id: req.params.id },
     data: updateData,
+    select: userSafeSelect,
   });
 
   await logAudit(

@@ -11,7 +11,7 @@ import { ChevronDown, Home } from 'lucide-react';
 
 const getHeatColor = (value: number) => {
   if (value >= 100) return '#059669';
-  if (value >= 80) return '#2563eb';
+  if (value >= 80) return '#171a6b';
   if (value >= 60) return '#d97706';
   return '#dc2626';
 };
@@ -120,7 +120,7 @@ export function CEODashboard() {
           <TopBranchesBarChart
             title={`Top 10 Branches by Total ${selectedKPI}`}
             data={analytical.topPerformers}
-            barColor="#f97316"
+            barColor="#ed8722"
           />
         </div>
       </div>
@@ -254,7 +254,7 @@ export function CEODashboard() {
                   <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                   <YAxis dataKey="rating" type="category" width={110} tick={{ fontSize: 11, fill: '#64748b' }} />
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#2563eb">
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#171a6b">
                     {hqData.performanceDistribution.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={getHeatColor(entry.count * 20)} />
                     ))}

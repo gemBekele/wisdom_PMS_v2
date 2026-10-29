@@ -16,7 +16,7 @@ const SemiGauge: React.FC<{ value: number; label: string; max?: number; color?: 
   value,
   label,
   max = 100,
-  color = '#f97316',
+  color = '#ed8722',
 }) => {
   const normalizedMax = max > 0 ? max : 1;
   const pct = Math.min(Math.max(value / normalizedMax, 0), 1);
@@ -80,7 +80,7 @@ export const RegionalGaugeCard: React.FC<GaugeProps> = ({
 
         <div className="flex items-center justify-around">
           <SemiGauge value={yesterday} label="Yesterday" max={maxVal} color="#94a3b8" />
-          <SemiGauge value={today} label="Today" max={maxVal} color="#f97316" />
+          <SemiGauge value={today} label="Today" max={maxVal} color="#ed8722" />
         </div>
 
         <div className="mt-3 flex flex-col items-center pt-3 border-t border-slate-100">
@@ -100,7 +100,7 @@ export const RegionalGaugeCard: React.FC<GaugeProps> = ({
 
           <div className="flex items-center justify-around">
             <SemiGauge value={activeYesterday} label="Yesterday" max={activeMaxVal} color="#94a3b8" />
-            <SemiGauge value={activeToday} label="Today" max={activeMaxVal} color="#f97316" />
+            <SemiGauge value={activeToday} label="Today" max={activeMaxVal} color="#ed8722" />
           </div>
 
           <div className="mt-3 flex flex-col items-center pt-3 border-t border-slate-100">

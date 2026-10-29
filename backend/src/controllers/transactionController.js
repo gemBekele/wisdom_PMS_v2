@@ -17,7 +17,7 @@ export const getTransactions = asyncHandler(async (req, res) => {
   const transactions = await prisma.transaction.findMany({
     where,
     orderBy: { transaction_date: 'desc' },
-    take: limit ? parseInt(limit) : 100,
+    take: Math.min(Math.max(parseInt(limit, 10) || 100, 1), 500),
   });
 
   res.status(200).json({

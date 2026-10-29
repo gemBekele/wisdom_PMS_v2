@@ -1,5 +1,5 @@
 @echo off
-echo 🚀 Starting SAKO PMS System...
+echo 🚀 Starting Wisdom SACCOS PMS System...
 echo ================================
 echo.
 

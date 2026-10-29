@@ -5,7 +5,7 @@
 > **API Base:** `http://51.91.125.62:3006/api`  
 > **Backend:** Node.js (Express) on port 5001, managed via PM2  
 > **Frontend:** React + Vite + TypeScript, served by Nginx (port 3006)  
-> **Database:** PostgreSQL on localhost:5432, database `sako_pms`  
+> **Database:** PostgreSQL on localhost:5432, database `wisdom_saccos_pms`  
 > **Nginx:** reverse-proxies `/api/` → `127.0.0.1:5001/api/`
 
 ---
@@ -564,7 +564,7 @@ Evaluates soft skills and behavioral competencies (15% of final score).
    - Position: "Customer Service Officer I"
    - Role: staff
    - Branch: WOLAYTA_SODO
-   - Supervisor: kidistale_gns@ghion.et
+   - Supervisor: kidistale_gns@wisdomsaccos.com
 2. Staff receives credentials, logs in
 3. **Branch Manager** maps accounts to the new staff at `/mapping` (or uses auto-balance)
 4. **Admin** creates (or updates) branch plans → cascade automatically creates StaffPlan for the new staff with individual targets
@@ -687,8 +687,8 @@ Region ──→ Area ──→ Branch ──→ User (staff)
 
 | Email | Password | Role | Branch |
 |-------|----------|------|--------|
-| `admin@ghion.et` | `1234` | Admin/CEO | All |
+| `admin@wisdomsaccos.com` | `1234` | Admin/CEO | All |
 | `am@wolayta.et` | `1234` | Area Manager | Wolayta Area |
 | `bm@sodo.et` | `1234` | Branch Manager | WOLAYTA_SODO |
-| `kidistale_gns@ghion.et` | `1234` | Supervisor | WOLAYTA_SODO |
-| `tigist_gns@ghion.et` | `1234` | Staff | WOLAYTA_SODO |
+| `kidistale_gns@wisdomsaccos.com` | `1234` | Supervisor | WOLAYTA_SODO |
+| `tigist_gns@wisdomsaccos.com` | `1234` | Staff | WOLAYTA_SODO |

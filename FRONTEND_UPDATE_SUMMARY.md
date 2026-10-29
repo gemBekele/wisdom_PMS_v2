@@ -85,7 +85,7 @@
 
 - ✅ Replaced all old role names across all files:
   - `Staff / MSO` → `staff`
-  - `SAKO HQ / Admin` → `admin`
+  - `Wisdom SACCOS HQ / Admin` → `admin`
   - `Area Manager` → `areaManager`
   - `Branch Manager` → `branchManager`
   - `Line Manager` → `lineManager`

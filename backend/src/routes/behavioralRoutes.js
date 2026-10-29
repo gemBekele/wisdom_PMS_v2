@@ -5,12 +5,12 @@ import {
   approveBehavioralEvaluation,
 } from '../controllers/behavioralController.js';
 import { protect } from '../middleware/auth.js';
-import { isSupervisor, isBranchManager } from '../middleware/rbac.js';
+import { isSupervisor, authorize } from '../middleware/rbac.js';
 
 const router = express.Router();
 
 router.get('/', protect, getBehavioralEvaluations);
 router.post('/', protect, isSupervisor, createBehavioralEvaluation);
-router.put('/:id/approve', protect, isBranchManager, approveBehavioralEvaluation);
+router.put('/:id/approve', protect, authorize('admin', 'areaManager', 'branchManager'), approveBehavioralEvaluation);
 
 export default router;

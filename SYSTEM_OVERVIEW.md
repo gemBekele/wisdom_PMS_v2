@@ -1,4 +1,4 @@
-# Ghion SACCOS PMS — System Overview
+# Wisdom SACCOS PMS — System Overview
 
 > Complete workflow documentation covering plan creation, cascade, task logging, approval chain, KPI calculation, role responsibilities, and data validation strategy.
 
@@ -547,7 +547,7 @@ All KPIs work purely through approval. The `cbsValidated: true` filter has been 
 
 ### What Products Are
 
-Products are the actual financial products Ghion SACCOS offers (saving accounts, loan accounts, services). They are mapped to KPI categories so that when a staff member logs a task, they can specify which product they worked on.
+Products are the actual financial products Wisdom SACCOS offers (saving accounts, loan accounts, services). They are mapped to KPI categories so that when a staff member logs a task, they can specify which product they worked on.
 
 ### Current Product-KPI Mappings (12)
 

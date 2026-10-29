@@ -1,7 +1,7 @@
 import prisma from '../config/database.js';
 import bcrypt from 'bcryptjs';
 
-const ADMIN_EMAIL = 'biruk.assefa@ghion.et';
+const ADMIN_EMAIL = 'biruk.assefa@wisdomsaccos.com';
 const NEW_PASSWORD = 'admin123';
 
 async function resetPassword() {

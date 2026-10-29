@@ -1,6 +1,6 @@
 import prisma from '../config/database.js';
 import { normalizePeriod } from './periodUtils.js';
-import { PRODUCT_CATEGORY_TO_KPI } from './prismaHelpers.js';
+import { PRODUCT_CATEGORY_TO_KPI, POSITION_MAP, TASK_TYPE_TO_ENUM } from './prismaHelpers.js';
 
 const DEPOSIT_PRODUCT_SHARES = {
   operationSupervisor: 35,
@@ -71,7 +71,7 @@ export const cascadePlanToStaff = async (branchPlan) => {
 
     const grouped = {};
     for (const s of allStaff) {
-      const normalizedPosition = s.position.replace(/_/g, ' ');
+      const normalizedPosition = POSITION_MAP[s.position] || s.position.replace(/_/g, ' ');
       const group = POSITION_GROUP[normalizedPosition];
       if (!group || group === 'branchManager') continue;
       if (!grouped[group]) grouped[group] = [];
@@ -84,7 +84,8 @@ export const cascadePlanToStaff = async (branchPlan) => {
     if (totalPresentShare === 0) throw new Error('No staff groups with valid shares found in branch');
 
     const staffPlansCreated = [];
-    const effectiveKpi = product_category ? (PRODUCT_CATEGORY_TO_KPI[product_category] || kpi_category) : kpi_category;
+    const productEnum = product_category ? (TASK_TYPE_TO_ENUM[product_category] || product_category) : null;
+    const effectiveKpi = productEnum ? (PRODUCT_CATEGORY_TO_KPI[productEnum] || kpi_category) : kpi_category;
 
     for (const [group, members] of presentGroups) {
       const matrixShare = shares[group] || 0;
@@ -104,7 +105,7 @@ export const cascadePlanToStaff = async (branchPlan) => {
             userId: member.id,
             position: member.position,
             kpi_category: effectiveKpi,
-            product_category: product_category || null,
+            product_category: productEnum,
             period,
             target_type,
             individual_target: perPerson,

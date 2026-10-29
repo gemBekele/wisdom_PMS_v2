@@ -120,7 +120,7 @@ export function AreaManagerDashboard() {
           <TopBranchesBarChart
             title={`Top 10 Branches by active ${selectedKPI} as a Region`}
             data={analytical.topPerformers}
-            barColor="#f97316"
+            barColor="#ed8722"
           />
         </div>
       </div>
@@ -171,11 +171,11 @@ export function AreaManagerDashboard() {
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                       outerRadius={70}
-                      fill="#8884d8"
+                      fill="#202289"
                       dataKey="value"
                     >
                       {data.mappingData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
+                        <Cell key={`cell-${index}`} fill={entry.color || '#202289'} />
                       ))}
                     </Pie>
                     <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} />

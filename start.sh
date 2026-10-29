@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 SAKO PMS - Starting Application"
+echo "🚀 Wisdom SACCOS PMS - Starting Application"
 echo "==================================="
 
 # Check if PostgreSQL is running
@@ -39,7 +39,7 @@ echo "==================================="
 echo "✅ Application started!"
 echo "📝 Backend: http://localhost:5000"
 echo "🌐 Frontend: http://localhost:5173"
-echo "🔑 Admin Login: admin@sako.com / admin123"
+echo "🔑 Admin Login: admin@wisdomsaccos.com / admin123"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 echo "==================================="

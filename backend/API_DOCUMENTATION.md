@@ -1,8 +1,8 @@
-# SAKO PMS Backend API Documentation
+# Wisdom SACCOS PMS Backend API Documentation
 
 ## Overview
 
-Complete REST API for SAKO Performance Management System with role-based access control.
+Complete REST API for Wisdom SACCOS Performance Management System with role-based access control.
 
 ## Base URL
 ```
@@ -449,7 +449,7 @@ Common status codes:
 
 | Role | Can Access |
 |------|-----------|
-| SAKO HQ / Admin | All endpoints |
+| Wisdom SACCOS HQ / Admin | All endpoints |
 | Regional Director | View dashboards, reports |
 | Area Manager | Area dashboard, approve BM tasks/evaluations |
 | Branch Manager | Branch dashboard, manage mappings, approve tasks |

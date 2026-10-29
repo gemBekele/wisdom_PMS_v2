@@ -1,43 +1,58 @@
 # Backend Setup Instructions
 
-## Step 1: Create .env File
+## Step 1: Create `.env`
 
-Create a file named `.env` in the `backend` folder with this content:
+Create a file named `.env` in the `backend` folder (never commit it):
 
 ```env
-PORT=5000
+PORT=5100
 NODE_ENV=development
 
-MONGODB_URI=mongodb+srv://hayderaman75_db_user:G073ApydNeA8VERX@cluster0.djzad5z.mongodb.net/sako-pms?retryWrites=true&w=majority
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/wisdom_saccos_pms?schema=public
 
-JWT_SECRET=sako-pms-super-secret-key-change-in-production-2024
+JWT_SECRET=replace-with-a-random-64-character-secret
 JWT_EXPIRE=7d
 
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5273
 ```
 
-## Step 2: Install Dependencies
+Generate a strong secret with `openssl rand -hex 32`. The server refuses to start in
+production if `JWT_SECRET` is missing or shorter than 32 characters.
+
+## Step 2: Install dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-## Step 3: Create Admin User
+## Step 3: Apply the database schema
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+```
+
+## Step 4: Create the first admin
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the environment, then run:
 
 ```bash
 npm run seed
 ```
 
-This will create:
-- Email: admin@sako.com
-- Password: admin123
+Do not use shared or published default passwords. Change the password immediately
+after the first login.
 
-## Step 4: Start Server
+## Step 5: Start the server
 
 ```bash
 npm run dev
 ```
 
-Server will run on http://localhost:5000
+The API runs on http://localhost:5100, with a health check at `/api/health`.
 
+## Demo data
+
+`npm run seed:demo` creates local demo users for each role. These accounts are for
+development only and must never be enabled in production.

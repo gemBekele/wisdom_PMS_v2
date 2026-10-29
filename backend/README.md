@@ -1,6 +1,6 @@
-# SAKO PMS Backend
+# Wisdom SACCOS PMS Backend
 
-Node.js + Express + MongoDB backend for SAKO Performance Management System.
+Node.js + Express + MongoDB backend for Wisdom SACCOS Performance Management System.
 
 ## Setup
 

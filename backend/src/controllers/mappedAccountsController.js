@@ -93,6 +93,17 @@ export const getMappedAccountsDashboard = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'User not found' });
   }
 
+  const actorRole = req.user.role;
+  if (userId !== req.user.id) {
+    const allowed =
+      actorRole === 'admin' ||
+      (actorRole === 'areaManager' && req.user.areaId && user.areaId === req.user.areaId) ||
+      (['branchManager', 'supervisor'].includes(actorRole) && req.user.branchId && user.branchId === req.user.branchId);
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to view this user' });
+    }
+  }
+
   // 1. Fetch mapped accounts
   const accounts = await prisma.accountMapping.findMany({
     where: { mappedToId: userId, status: { not: 'Inactive' } },
@@ -201,12 +212,12 @@ export const getBranchMappedAccounts = asyncHandler(async (req, res) => {
     activeStatus: a.active_status,
     isProductive: a.isProductive,
     product: a.product,
-    mappedTo: {
+    mappedTo: a.mappedTo ? {
       id: a.mappedTo.id,
       name: a.mappedTo.name,
       employeeId: a.mappedTo.employeeId,
       position: a.mappedTo.position,
-    },
+    } : null,
   }));
 
   res.status(200).json({ success: true, data: mapped });

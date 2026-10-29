@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add professional-grade NPL (Non-Performing Loan) tracking and daily collection performance monitoring to the Sacko-PMS system. Follows PAR (Portfolio at Risk) methodology used by real SACCO systems (SaccoSys, Redian, Crego) across Kenya and East Africa.
+Add professional-grade NPL (Non-Performing Loan) tracking and daily collection performance monitoring to the Wisdom-PMS system. Follows PAR (Portfolio at Risk) methodology used by real SACCO systems (SaccoSys, Redian, Crego) across Kenya and East Africa.
 
 Two-pronged output:
 - **Staff view** → daily alerts for missed payments ("go collect from these customers")

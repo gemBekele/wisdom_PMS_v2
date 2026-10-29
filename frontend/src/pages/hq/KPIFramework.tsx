@@ -22,11 +22,11 @@ const DEFAULT_KPI_DATA = [
 ];
 
 const thresholds = [
-  { label: 'Outstanding', min: 120, max: 100, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Exceeds Expectations', min: 100, max: 119, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Meets Expectations', min: 90, max: 99, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Needs Improvement', min: 80, max: 89, color: 'text-orange-600', bg: 'bg-orange-50' },
-  { label: 'Unsatisfactory', min: 0, max: 79, color: 'text-red-600', bg: 'bg-red-50' },
+  { label: 'Outstanding', min: 90, max: 100, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'Exceeds Expectations', min: 80, max: 89, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Meets Expectations', min: 70, max: 79, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { label: 'Needs Improvement', min: 60, max: 69, color: 'text-orange-600', bg: 'bg-orange-50' },
+  { label: 'Unsatisfactory', min: 0, max: 59, color: 'text-red-600', bg: 'bg-red-50' },
 ];
 
 export function KPIFramework() {

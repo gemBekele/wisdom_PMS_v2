@@ -1,4 +1,4 @@
-# SAKO PMS - Navigation Routes Guide
+# Wisdom SACCOS PMS - Navigation Routes Guide
 
 Since this is a mock frontend without authentication, you can access any route directly in your browser.
 
@@ -8,7 +8,7 @@ Base URL: `http://localhost:5173`
 
 ## Role-Specific Dashboards
 
-### 1. SAKO HQ / Admin
+### 1. Wisdom SACCOS HQ / Admin
 - **Dashboard**: `/dashboard/hq` - Overview of all branches, performance metrics, activity feed
 - **Tasks**: `/tasks` - View and manage task submissions
 - **New Task**: `/tasks/new` - Submit a new daily task

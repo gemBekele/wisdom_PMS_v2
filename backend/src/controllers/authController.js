@@ -117,13 +117,12 @@ export const login = asyncHandler(async (req, res) => {
 export const getMe = asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    include: {
-      branch: {
-        select: { id: true, name: true, code: true },
-      },
-      area: {
-        select: { id: true, name: true },
-      },
+    select: {
+      id: true, employeeId: true, name: true, email: true, role: true,
+      branchId: true, branch_code: true, areaId: true, position: true,
+      supervisorId: true, teamId: true, isActive: true, createdAt: true, updatedAt: true,
+      branch: { select: { id: true, name: true, code: true } },
+      area: { select: { id: true, name: true } },
     },
   });
 
@@ -156,6 +155,11 @@ export const updateDetails = asyncHandler(async (req, res) => {
   const user = await prisma.user.update({
     where: { id: req.user.id },
     data: fieldsToUpdate,
+    select: {
+      id: true, employeeId: true, name: true, email: true, role: true,
+      branchId: true, branch_code: true, areaId: true, position: true,
+      isActive: true, createdAt: true, updatedAt: true,
+    },
   });
 
   await logAudit(

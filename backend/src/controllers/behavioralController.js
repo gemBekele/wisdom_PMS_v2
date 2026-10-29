@@ -45,8 +45,25 @@ const buildBehavioralApprovalChain = async (user) => {
 export const createBehavioralEvaluation = asyncHandler(async (req, res) => {
   const { evaluatedUserId, period, year, month, quarter, competencies, overallComments } = req.body;
 
+  if (!evaluatedUserId) {
+    return res.status(400).json({ success: false, message: 'evaluatedUserId is required' });
+  }
+  if (evaluatedUserId === req.user.id) {
+    return res.status(400).json({ success: false, message: 'You cannot evaluate yourself' });
+  }
+  const evaluatedUser = await prisma.user.findUnique({
+    where: { id: evaluatedUserId },
+    select: { id: true, branchId: true, branch_code: true, isActive: true },
+  });
+  if (!evaluatedUser || !evaluatedUser.isActive) {
+    return res.status(400).json({ success: false, message: 'Evaluated user not found or inactive' });
+  }
+  if (req.user.role !== 'admin' && req.user.branchId && evaluatedUser.branchId && evaluatedUser.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'You can only evaluate users in your branch' });
+  }
+
   const totalScore = calculateBehavioralScore(competencies);
-  const approvalChainData = await buildBehavioralApprovalChain(req.user);
+  await buildBehavioralApprovalChain(req.user);
 
   const evaluation = await prisma.$transaction(async (tx) => {
     const newEval = await tx.behavioralEvaluation.create({
@@ -143,6 +160,16 @@ export const approveBehavioralEvaluation = asyncHandler(async (req, res) => {
       success: false,
       message: 'Evaluation not found',
     });
+  }
+
+  if (evaluation.evaluatedById === req.user.id) {
+    return res.status(403).json({ success: false, message: 'You cannot approve your own evaluation' });
+  }
+  if (req.user.role !== 'admin' && req.user.branchId && evaluation.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Evaluation is outside your branch' });
+  }
+  if (!['Approved', 'Rejected'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Status must be Approved or Rejected' });
   }
 
   let updateData = { approvalStatus: status };

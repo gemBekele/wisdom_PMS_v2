@@ -1,10 +1,10 @@
-# Ghion SACCOS — PMS Migration Plan & Tracker
+# Wisdom SACCOS — PMS Migration Plan & Tracker
 
 ## Branch
-`Ghion-Saccos` (created from `main` at commit `664b56f`)
+`Wisdom-Saccos` (created from `main` at commit `664b56f`)
 
 ## Goal
-Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's org model:
+Rebrand and restructure the PMS system from Wisdom SACCOS's org model to Wisdom SACCOS's org model:
 - New organizational structure (CEO → Area Manager → Branch Manager → Supervisors → Officers)
 - New KPI framework (9 categories matching client's cascading matrix)
 - New performance rating scale (% of target based)
@@ -48,7 +48,7 @@ Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's o
 - [ ] Update `AccountMapping` model: add `isProductive` Boolean, `lastActivityDate`
 - [ ] Update `PerformanceScore` model: new rating logic
 - [ ] Run `npx prisma migrate dev`
-- [ ] Update seed script for Ghion SACCOS structure
+- [ ] Update seed script for Wisdom SACCOS structure
 
 #### Details
 - All enum changes are additive + removal — old enum values replaced entirely
@@ -99,7 +99,7 @@ Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's o
 #### Tasks
 - [x] Update `App.tsx`: new role routing, add SupervisorDashboard, remove old routes
 - [x] Update `Login.tsx`: new positions in dropdown, updated getDashboardPath
-- [x] Update `Sidebar.tsx`: new nav links, new branding "GHION SACCOS PMS", removed old role nav
+- [x] Update `Sidebar.tsx`: new nav links, new branding "WISDOM SACCOS PMS", removed old role nav
 - [x] Update `TopNav.tsx`: removed old role notifications, added supervisor, branding update
 - [x] Create `pages/SupervisorDashboard.tsx`: team overview, approvals, behavioral input
 - [x] Rename `HQDashboard.tsx` → `CEODashboard.tsx` (fixed export name)
@@ -119,10 +119,10 @@ Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's o
 - [x] Update `AreaManagerDashboard.tsx`: no region refs, mapping coverage, branch status
 - [x] Update `StaffDashboard.tsx`: KPI progress, productive badge column on accounts
 - [x] Update `CEODashboard.tsx`: removed Region columns, branch heatmap, top/bottom branches
-- [x] Update `MappedAccounts.tsx`: added Productivity Status column, updated KPI enums to 9 Ghion categories
-- [x] Update `TaskEntryForm.tsx`: 11 new task types matching Ghion schema
+- [x] Update `MappedAccounts.tsx`: added Productivity Status column, updated KPI enums to 9 Wisdom categories
+- [x] Update `TaskEntryForm.tsx`: 11 new task types matching Wisdom schema
 - [x] Update `Tasks.tsx`: approval chain timeline display (supervisor → BM flow)
-- [x] Update `PlanCascade.tsx`: 9 Ghion KPI categories
+- [x] Update `PlanCascade.tsx`: 9 Wisdom KPI categories
 - [x] Update `PlansOverview.tsx`: 9 KPI names & colors
 - [x] Update `BehavioralEvaluation.tsx`: supervisor→staff evaluation flow
 - [x] Update `BehavioralInput.tsx`: filter by supervisorId
@@ -140,7 +140,7 @@ Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's o
 ### Status: ⏳ Not Started
 
 #### Tasks
-- [ ] Create `seedGhionSaccos.js`: full org with new positions, 9 KPIs, cascaded plans
+- [ ] Create `seedWisdomSaccos.js`: full org with new positions, 9 KPIs, cascaded plans
 - [ ] Create 30-50 account mappings with productivity statuses
 - [ ] Create sample daily tasks with new task types
 - [ ] Create sample behavioral evaluations
@@ -163,12 +163,12 @@ Rebrand and restructure the PMS system from SAKO's org model to Ghion SACCOS's o
 ## Daily Change Log
 
 ### 2026-06-29
-- Created branch `Ghion-Saccos` from `main`
+- Created branch `Wisdom-Saccos` from `main`
 - Created this migration plan document
 - Phase 1 (Schema): Rewrote Prisma schema — all enums updated (UserRole, Position, KpiCategory, TaskType, PerformanceRating), removed Region/Team/SubTeam/EvaluationApproval/PlanShareConfig models, added supervisorId to User, isProductive to AccountMapping. Migration SQL with data mapping. Ran on server.
 - Phase 2 (Auth): Updated rbac.js, roleNormalizer.js, frontend roleMapper.ts
 - Phase 3 (Backend Routes/Controllers): Removed old routes/controllers, updated server.js, rewrote planCascade.js with client's cascading matrix, cleaned region refs from all controllers. Backend running and responding on port 5001.
 - Phase 4 (Frontend Core): Updated App.tsx routing, Login.tsx with new positions, Sidebar/TopNav branding, created SupervisorDashboard, renamed HQ→CEO dashboard, removed 6 old page files, fixed TS types
-- Phase 5 (Frontend Dashboards): Updated all dashboards (CEO/Area/Branch/Supervisor/Staff) with new KPIs, supervisor view, productive badge. Updated TaskEntryForm with 11 task types. Updated PlanCascade/PlansOverview/ProductMapping with 9 Ghion KPIs. Fixed BehavioralInput supervisor filter. Deleted orphaned HQDashboard.tsx. Removed getRegional, added getSupervisor to API layer.
-- Product Fix: Updated KPI_CATEGORY_TO_ENUM in prismaHelpers.js with all 9 Ghion categories. Rewired TaskEntryForm to fetch product types dynamically from productMapping API. Fallback uses client's real CBS products. Admins can now add/edit products via ProductMapping page and they auto-appear in TaskEntryForm.
-- Next: Phase 6 — Seed Data (create seedGhionSaccos.js with full org, 9 KPIs, cascaded plans, 30-50 accounts, sample tasks/evals)
+- Phase 5 (Frontend Dashboards): Updated all dashboards (CEO/Area/Branch/Supervisor/Staff) with new KPIs, supervisor view, productive badge. Updated TaskEntryForm with 11 task types. Updated PlanCascade/PlansOverview/ProductMapping with 9 Wisdom KPIs. Fixed BehavioralInput supervisor filter. Deleted orphaned HQDashboard.tsx. Removed getRegional, added getSupervisor to API layer.
+- Product Fix: Updated KPI_CATEGORY_TO_ENUM in prismaHelpers.js with all 9 Wisdom categories. Rewired TaskEntryForm to fetch product types dynamically from productMapping API. Fallback uses client's real CBS products. Admins can now add/edit products via ProductMapping page and they auto-appear in TaskEntryForm.
+- Next: Phase 6 — Seed Data (create seedWisdomSaccos.js with full org, 9 KPIs, cascaded plans, 30-50 accounts, sample tasks/evals)

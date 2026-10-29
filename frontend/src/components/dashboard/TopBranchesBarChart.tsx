@@ -29,7 +29,7 @@ const formatNumber = (num: number): string => {
 export const TopBranchesBarChart: React.FC<ChartProps> = ({
   title,
   data = [],
-  barColor = '#f97316',
+  barColor = '#ed8722',
 }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm h-full flex flex-col">
@@ -65,7 +65,7 @@ export const TopBranchesBarChart: React.FC<ChartProps> = ({
               />
               <Tooltip
                 formatter={(val: number) => [val.toLocaleString(), 'Value']}
-                labelStyle={{ fontWeight: 600, color: '#1e293b' }}
+                labelStyle={{ fontWeight: 600, color: '#111111' }}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />
               <Bar dataKey="value" fill={barColor} radius={[4, 4, 0, 0]} maxBarSize={36} />

@@ -1,4 +1,4 @@
-# Major Fixes — Sacko-PMS (Ghion SACCOS)
+# Major Fixes — Wisdom-PMS (Wisdom SACCOS)
 
 **Status:** Planning only — no code changes in this document  
 **Authority:** Client reality + current code > old internal docs  
@@ -324,7 +324,7 @@ Mixed period formats (`2025-H2`, `FY-2026-27`, hardcodes in dashboards) cause em
 
 ### Target behavior
 
-**Canonical period string** for Ghion FY plans:
+**Canonical period string** for Wisdom FY plans:
 
 ```
 FY-2026-27
@@ -377,7 +377,7 @@ Cascade matrix assigns % to position groups. If a branch has **no** Operation Su
 | **C. Force HQ to reconfigure matrix per branch** | Admin sets custom shares when headcount incomplete | Explicit | Operational burden; error-prone |
 | **D. Assign missing share to a designated role** (e.g. CR Supervisor or BM operationally) | Missing Op Sup share → CR Sup | Clear owner | Not true BM “no share” if parked on BM |
 
-**Recommended for Ghion: Option A**, with audit log of effective shares.
+**Recommended for Wisdom: Option A**, with audit log of effective shares.
 
 ### Target algorithm (Option A)
 
@@ -427,7 +427,7 @@ monthly_target= from monthly_plan if present, else period_target / months
 **Working day definition (v1):**
 
 - Mon–Fri as working days **unless** listed as public holiday.
-- Saturday/Sunday excluded by default (confirm with Ghion if Saturday is half-day — config flag).
+- Saturday/Sunday excluded by default (confirm with Wisdom if Saturday is half-day — config flag).
 - Holiday list: configurable table or JSON config (`workingCalendar`) per year, Ethiopian public holidays for that FY.
 - Optional later: full Ethiopian calendar library; v1 can use Gregorian dates of Ethiopian holidays.
 

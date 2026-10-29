@@ -40,7 +40,7 @@ echo ""
 echo "=== 1. AUTHENTICATION ==="
 eval $SSH "curl -s -X POST http://localhost:5001/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{\"email\":\"biruk.assefa@ghion.et\",\"password\":\"admin123\"}'" > /tmp/login.json
+  -d '{\"email\":\"biruk.assefa@wisdomsaccos.com\",\"password\":\"admin123\"}'" > /tmp/login.json
 
 TOKEN=$(python3 -c "import json; d=json.load(open('/tmp/login.json')); print(d.get('token',''))")
 ADMIN_ID=$(python3 -c "import json; d=json.load(open('/tmp/login.json')); print(d.get('data',{}).get('_id',''))")

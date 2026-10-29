@@ -142,15 +142,31 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full w-60 bg-primary border-r border-primary-600 z-40 transition-transform lg:translate-x-0",
+          "fixed left-0 top-0 h-full w-60 bg-primary-950 border-r border-white/10 z-40 transition-transform lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="p-6 border-b border-primary-600">
-          <h1 className="text-xl font-bold text-white">GHION SACCOS PMS</h1>
-          <p className="text-xs text-blue-100 mt-1">{role === 'admin' ? 'Admin' : role === 'areaManager' ? 'Area Manager' : role === 'branchManager' ? 'Branch Manager' : role === 'supervisor' ? 'Supervisor' : role}</p>
+        <div className="border-b border-white/10 p-5">
+          <div className="flex items-center gap-3">
+            <img
+              src="/wisdom-logo.png"
+              alt="Wisdom SACCOS"
+              className="h-11 w-11 rounded-full bg-white object-contain p-0.5"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-base font-extrabold uppercase leading-none tracking-[0.14em] text-white">
+                Wisdom
+              </h1>
+              <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.32em] text-accent">
+                SACCOS PMS
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 truncate text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">
+            {role === 'admin' ? 'Administrator' : role === 'areaManager' ? 'Area Manager' : role === 'branchManager' ? 'Branch Manager' : role === 'supervisor' ? 'Supervisor' : role}
+          </p>
         </div>
-        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-100px)]">
+        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-128px)]">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -163,8 +179,8 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors rounded-md",
                     active
-                      ? "bg-white text-primary"
-                      : "text-white hover:bg-primary-600 hover:text-white"
+                      ? "border-l-4 border-accent bg-white text-primary-900"
+                      : "border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -180,8 +196,8 @@ export function Sidebar() {
                         className={cn(
                           "block px-4 py-2 text-sm transition-colors rounded-md",
                           location.pathname === child.path
-                            ? "bg-white text-primary"
-                            : "text-white hover:bg-primary-600 hover:text-white"
+                            ? "border-l-4 border-accent bg-white text-primary-900"
+                            : "border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white"
                         )}
                       >
                         {child.title}
@@ -192,15 +208,15 @@ export function Sidebar() {
               </div>
             );
           })}
-          <div className="pt-4 mt-4 border-t border-primary-600 space-y-1">
+          <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
             <Link
               to="/profile"
               onClick={() => setIsOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors rounded-md",
                 location.pathname === '/profile'
-                  ? "bg-white text-primary"
-                  : "text-white hover:bg-primary-600 hover:text-white"
+                  ? "border-l-4 border-accent bg-white text-primary-900"
+                  : "border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
               <User className="h-5 w-5 shrink-0" />
@@ -212,8 +228,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors rounded-md",
                 location.pathname === '/routes'
-                  ? "bg-white text-primary"
-                  : "text-white hover:bg-primary-600 hover:text-white"
+                  ? "border-l-4 border-accent bg-white text-primary-900"
+                  : "border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
               <BookOpen className="h-5 w-5 shrink-0" />
@@ -225,8 +241,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors rounded-md",
                 location.pathname === '/settings'
-                  ? "bg-white text-primary"
-                  : "text-white hover:bg-primary-600 hover:text-white"
+                  ? "border-l-4 border-accent bg-white text-primary-900"
+                  : "border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
               <Settings className="h-5 w-5 shrink-0" />

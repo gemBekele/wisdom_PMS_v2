@@ -43,25 +43,30 @@ export function TopNav() {
   }, [fetchUnreadCount]);
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-primary-100 bg-white">
+    <header className="sticky top-0 z-30 w-full border-b border-line bg-white/95 backdrop-blur">
       <div className="flex h-14 lg:h-16 items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-6">
-          <h2 className="text-sm sm:text-lg font-semibold text-slate-800 hidden sm:block">GHION SACCOS PMS</h2>
-          <h2 className="text-sm font-semibold text-slate-800 sm:hidden">PMS</h2>
+          <h2 className="hidden items-baseline gap-2 font-display text-sm font-extrabold uppercase tracking-[0.14em] text-primary-900 sm:flex lg:text-base">
+            Wisdom SACCOS
+            <span className="text-[9px] font-semibold tracking-[0.3em] text-accent-600">PMS</span>
+          </h2>
+          <h2 className="font-display text-sm font-extrabold uppercase tracking-[0.14em] text-primary-900 sm:hidden">
+            Wisdom <span className="text-accent-600">PMS</span>
+          </h2>
           {shouldShowBranch && (
             <div className="flex items-center gap-1 sm:gap-2">
-              <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">Branch:</span>
-              <span className="text-xs sm:text-sm font-medium text-slate-800 truncate max-w-[80px] sm:max-w-none">{currentBranch}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-stone/60 hidden sm:inline">Branch</span>
+              <span className="text-xs sm:text-sm font-medium text-primary-900 truncate max-w-[80px] sm:max-w-none">{currentBranch}</span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-4">
           <button
-            className="relative p-2 hover:bg-slate-100 rounded-md transition-colors"
+            className="relative rounded-sm p-2 transition-colors hover:bg-ivory"
             onClick={() => setShowNotifications(true)}
           >
-            <Bell className="h-5 w-5 text-slate-600" />
+            <Bell className="h-5 w-5 text-stone" />
             {unreadCount > 0 && (
               <Badge
                 variant="destructive"
@@ -74,19 +79,19 @@ export function TopNav() {
 
           <NotificationModal open={showNotifications} onOpenChange={setShowNotifications} />
 
-          <button className="p-2 hover:bg-slate-100 rounded-md">
-            <Globe className="h-5 w-5 text-slate-600" />
+          <button className="rounded-sm p-2 hover:bg-ivory">
+            <Globe className="h-5 w-5 text-stone" />
           </button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-slate-100 rounded-md px-2 py-1">
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-sm px-2 py-1 hover:bg-ivory">
               <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                <AvatarFallback className="bg-blue-500 text-white text-[10px] sm:text-xs">
+                <AvatarFallback className="bg-primary-900 text-white text-[10px] sm:text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs sm:text-sm font-medium text-slate-800 hidden sm:inline">{userName}</span>
-              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
+              <span className="text-xs sm:text-sm font-medium text-ink hidden sm:inline">{userName}</span>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-stone" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>

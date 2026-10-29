@@ -29,13 +29,6 @@ export const importJuneBalance = asyncHandler(async (req, res) => {
   }
 
   try {
-    if (make_active) {
-      await prisma.juneBalance.updateMany({
-        where: { is_active: true },
-        data: { is_active: false }
-      });
-    }
-
     const workbook = XLSX.readFile(req.file.path);
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
@@ -108,6 +101,13 @@ export const importJuneBalance = asyncHandler(async (req, res) => {
       } catch (error) {
         results.errors.push(`Error: ${error.message}`);
       }
+    }
+
+    if (make_active) {
+      await prisma.juneBalance.updateMany({
+        where: { is_active: true, baseline_period: { not: baseline_period } },
+        data: { is_active: false },
+      });
     }
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);

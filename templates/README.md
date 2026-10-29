@@ -1,4 +1,4 @@
-# Upload File Templates — Sacko PMS
+# Upload File Templates — Wisdom PMS
 
 These sample files demonstrate the expected format for each upload endpoint.
 

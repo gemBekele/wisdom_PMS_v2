@@ -11,7 +11,7 @@ import {
 } from '../utils/performanceCalculator.js';
 import XLSX from 'xlsx';
 import fs from 'fs';
-import { KPI_CATEGORY_TO_ENUM, CBS_PRODUCT_TO_CATEGORY } from '../utils/prismaHelpers.js';
+import { KPI_CATEGORY_TO_ENUM, PRODUCT_CATEGORY_TO_KPI, TASK_TYPE_TO_ENUM, CBS_PRODUCT_TO_CATEGORY } from '../utils/prismaHelpers.js';
 
 // @desc    Create plan manually
 // @route   POST /api/plans
@@ -41,17 +41,30 @@ export const createPlan = asyncHandler(async (req, res) => {
     });
   }
 
-  // Convert KPI category string to enum
-  const kpiEnum = KPI_CATEGORY_TO_ENUM[kpi_category] || kpi_category;
+  let kpiEnum = KPI_CATEGORY_TO_ENUM[kpi_category];
+  let normalizedProductCategory = product_category ? (TASK_TYPE_TO_ENUM[product_category] || product_category) : null;
+  if (!kpiEnum) {
+    const productEnum = TASK_TYPE_TO_ENUM[kpi_category];
+    if (productEnum) {
+      normalizedProductCategory = normalizedProductCategory || productEnum;
+      kpiEnum = PRODUCT_CATEGORY_TO_KPI[productEnum] || 'Deposit_Mobilization';
+    }
+  }
+  if (!kpiEnum) {
+    return res.status(400).json({ success: false, message: 'Invalid KPI category' });
+  }
+  const numericTarget = Number(target_value);
+  if (!Number.isFinite(numericTarget) || numericTarget < 0) {
+    return res.status(400).json({ success: false, message: 'target_value must be a non-negative number' });
+  }
 
-  // Check if plan already exists (include product_category if provided)
   const existingWhere = {
     branch_code: branch_code.toUpperCase().trim(),
     kpi_category: kpiEnum,
     period,
     status: { in: ['Draft', 'Active'] },
   };
-  if (product_category) existingWhere.product_category = product_category;
+  if (normalizedProductCategory) existingWhere.product_category = normalizedProductCategory;
 
   const existingPlan = await prisma.plan.findFirst({ where: existingWhere });
 
@@ -69,9 +82,9 @@ export const createPlan = asyncHandler(async (req, res) => {
       branchId: branch.id,
       kpi_category: kpiEnum,
       period,
-      target_value: parseFloat(target_value),
+      target_value: numericTarget,
       target_count: target_count ? parseInt(target_count) : undefined,
-      product_category: product_category || null,
+      product_category: normalizedProductCategory,
       monthly_plan: monthly_plan || undefined,
       target_type: target_type || 'incremental',
       status: 'Active',
@@ -143,20 +156,7 @@ export const uploadPlan = asyncHandler(async (req, res) => {
       processed: 0,
     };
 
-    const validKpiCategories = [
-      'Loan Saving Deposit',
-      'Michu Current Saving',
-      'Gihon Regular Saving',
-      'Mothers Saving',
-      'Young Womens Saving',
-      'Elders Saving',
-      'Children Saving',
-      'Fixed Time Deposit',
-      'Premium Saving Deposit',
-      'Special Saving',
-      'Segment Deposit',
-      'Wadiah IFB Deposit',
-    ];
+    const validKpiCategories = Object.keys(KPI_CATEGORY_TO_ENUM);
 
     const validPeriods = ['FY-2026-27', '2025-H2', 'Q4-2025', 'December-2025', '2025'];
 
@@ -183,7 +183,16 @@ export const uploadPlan = asyncHandler(async (req, res) => {
           continue;
         }
 
-        if (!validKpiCategories.includes(kpi_category)) {
+        let kpiEnum = KPI_CATEGORY_TO_ENUM[kpi_category];
+        let resolvedProductCategory = product_category ? (TASK_TYPE_TO_ENUM[product_category] || product_category) : null;
+        if (!kpiEnum) {
+          const productEnum = TASK_TYPE_TO_ENUM[kpi_category];
+          if (productEnum) {
+            resolvedProductCategory = resolvedProductCategory || productEnum;
+            kpiEnum = PRODUCT_CATEGORY_TO_KPI[productEnum] || 'Deposit_Mobilization';
+          }
+        }
+        if (!kpiEnum) {
           results.errors.push(`Row ${index + 2}: Invalid kpi_category: "${kpi_category}"`);
           continue;
         }
@@ -193,17 +202,11 @@ export const uploadPlan = asyncHandler(async (req, res) => {
           continue;
         }
 
-        // Find branchId
-        const branch = await prisma.branch.findUnique({
-          where: { code: branch_code }
-        });
-
+        const branch = await prisma.branch.findUnique({ where: { code: branch_code } });
         if (!branch) {
           results.errors.push(`Row ${index + 2}: Branch with code ${branch_code} not found`);
           continue;
         }
-
-        const kpiEnum = KPI_CATEGORY_TO_ENUM[kpi_category] || kpi_category;
 
         // Check if plan already exists (include product_category if provided)
         const existingWhere = {
@@ -212,7 +215,7 @@ export const uploadPlan = asyncHandler(async (req, res) => {
           period,
           status: { in: ['Draft', 'Active'] },
         };
-        if (product_category) existingWhere.product_category = product_category;
+        if (resolvedProductCategory) existingWhere.product_category = resolvedProductCategory;
 
         const existingPlan = await prisma.plan.findFirst({ where: existingWhere });
 
@@ -230,7 +233,7 @@ export const uploadPlan = asyncHandler(async (req, res) => {
             period,
             target_value,
             target_count: target_count || undefined,
-            product_category: product_category || null,
+            product_category: resolvedProductCategory || null,
             monthly_plan: monthly_plan || undefined,
             target_type: 'incremental',
             status: 'Active',
@@ -335,47 +338,63 @@ export const getPlan = asyncHandler(async (req, res) => {
 // @route   PUT /api/plans/:id
 // @access  Private (Admin)
 export const updatePlan = asyncHandler(async (req, res) => {
-  let plan = await prisma.plan.findUnique({ where: { id: req.params.id } });
-
-  if (!plan) {
-    return res.status(404).json({
-      success: false,
-      message: 'Plan not found',
-    });
+  const existingPlan = await prisma.plan.findUnique({ where: { id: req.params.id } });
+  if (!existingPlan) {
+    return res.status(404).json({ success: false, message: 'Plan not found' });
   }
 
-  const targetChanged = req.body.target_value && parseFloat(req.body.target_value) !== plan.target_value;
+  const allowedFields = ['kpi_category', 'period', 'target_value', 'target_count', 'product_category', 'monthly_plan', 'target_type', 'status'];
+  const updateData = {};
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) updateData[field] = req.body[field];
+  }
 
-  const updateData = { ...req.body };
-  if (updateData.target_value) updateData.target_value = parseFloat(updateData.target_value);
-  if (updateData.kpi_category) updateData.kpi_category = KPI_CATEGORY_TO_ENUM[updateData.kpi_category] || updateData.kpi_category;
+  if (updateData.kpi_category) {
+    let kpiEnum = KPI_CATEGORY_TO_ENUM[updateData.kpi_category];
+    let productEnum = updateData.product_category ? (TASK_TYPE_TO_ENUM[updateData.product_category] || updateData.product_category) : null;
+    if (!kpiEnum) {
+      const legacyProductEnum = TASK_TYPE_TO_ENUM[updateData.kpi_category];
+      if (legacyProductEnum) {
+        productEnum = productEnum || legacyProductEnum;
+        kpiEnum = PRODUCT_CATEGORY_TO_KPI[legacyProductEnum] || 'Deposit_Mobilization';
+      }
+    }
+    if (!kpiEnum) {
+      return res.status(400).json({ success: false, message: 'Invalid KPI category' });
+    }
+    updateData.kpi_category = kpiEnum;
+    if (productEnum) updateData.product_category = productEnum;
+  } else if (updateData.product_category) {
+    updateData.product_category = TASK_TYPE_TO_ENUM[updateData.product_category] || updateData.product_category;
+  }
 
-  plan = await prisma.plan.update({
-    where: { id: req.params.id },
-    data: updateData,
-  });
+  if (updateData.target_value !== undefined) {
+    const value = Number(updateData.target_value);
+    if (!Number.isFinite(value) || value < 0) {
+      return res.status(400).json({ success: false, message: 'target_value must be a non-negative number' });
+    }
+    updateData.target_value = value;
+  }
+  if (updateData.target_count !== undefined) {
+    const count = Number(updateData.target_count);
+    if (!Number.isFinite(count) || count < 0) {
+      return res.status(400).json({ success: false, message: 'target_count must be a non-negative number' });
+    }
+    updateData.target_count = count;
+  }
+  if (updateData.period) updateData.period = normalizePeriod(updateData.period);
 
-  if (updateData.target_count) updateData.target_count = parseInt(updateData.target_count);
-  if (updateData.monthly_plan) updateData.monthly_plan = updateData.monthly_plan;
+  const plan = await prisma.plan.update({ where: { id: req.params.id }, data: updateData });
 
-  if (targetChanged) {
+  if (plan.status === 'Cancelled' || plan.status === 'Completed') {
+    await prisma.staffPlan.updateMany({ where: { branchPlanId: plan.id }, data: { status: plan.status } });
+  } else {
     await cascadeBranchPlan(plan);
   }
 
-  await logAudit(
-    req.user.id,
-    'Plan Update',
-    'Plan',
-    plan.id,
-    `${plan.kpi_category} - ${plan.branch_code}`,
-    `Updated plan`,
-    req
-  );
+  await logAudit(req.user.id, 'Plan Update', 'Plan', plan.id, `${plan.kpi_category} - ${plan.branch_code}`, 'Updated plan', req);
 
-  res.status(200).json({
-    success: true,
-    data: { ...plan, _id: plan.id },
-  });
+  res.status(200).json({ success: true, data: { ...plan, _id: plan.id } });
 });
 
 const DEPOSIT_TASK_TYPES = [

@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 // Create a single instance of Prisma Client
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+  log: process.env.PRISMA_LOG_QUERIES === 'true' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
 });
 
 // Connection function for compatibility with existing code

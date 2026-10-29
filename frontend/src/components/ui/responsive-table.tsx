@@ -25,6 +25,22 @@ interface ResponsiveTableProps<T = any> {
   onRowClick?: (row: T) => void;
 }
 
+function useIsMobile() {
+  const query = '(max-width: 639px)';
+  const [isMobile, setIsMobile] = React.useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches
+  );
+
+  React.useEffect(() => {
+    const media = window.matchMedia(query);
+    const handler = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+    media.addEventListener('change', handler);
+    return () => media.removeEventListener('change', handler);
+  }, []);
+
+  return isMobile;
+}
+
 export function ResponsiveTable<T>({
   columns,
   data,
@@ -34,58 +50,17 @@ export function ResponsiveTable<T>({
   mobileActions,
   onRowClick,
 }: ResponsiveTableProps<T>) {
+  const isMobile = useIsMobile();
+
   if (data.length === 0) {
     return (
       <div className="text-center py-10 text-slate-400 text-sm">{emptyMessage}</div>
     );
   }
 
-  return (
-    <>
-      {/* Desktop / tablet: regular table with horizontal scroll */}
-      <div className={cn('hidden sm:block overflow-x-auto', className)}>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={cn(
-                    'text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3',
-                    col.headerClassName
-                  )}
-                >
-                  {col.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {data.map((row) => (
-              <tr
-                key={rowKey(row)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={cn(
-                  'hover:bg-slate-50/60',
-                  onRowClick && 'cursor-pointer transition-colors'
-                )}
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={cn('px-4 py-3 align-middle', col.className)}
-                  >
-                    {col.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Phone: stacked cards */}
-      <div className={cn('sm:hidden space-y-3', className)}>
+  if (isMobile) {
+    return (
+      <div className={cn('space-y-3', className)}>
         {data.map((row) => {
           const primaryCol = columns.find((c) => c.primary) || columns[0];
           const rest = columns.filter((c) => c.key !== primaryCol?.key && !c.hideOnMobile);
@@ -124,7 +99,50 @@ export function ResponsiveTable<T>({
           );
         })}
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className={cn('overflow-x-auto', className)}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-slate-50 border-b border-slate-200">
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={cn(
+                  'text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3',
+                  col.headerClassName
+                )}
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {data.map((row) => (
+            <tr
+              key={rowKey(row)}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              className={cn(
+                'hover:bg-slate-50/60',
+                onRowClick && 'cursor-pointer transition-colors'
+              )}
+            >
+              {columns.map((col) => (
+                <td
+                  key={col.key}
+                  className={cn('px-4 py-3 align-middle', col.className)}
+                >
+                  {col.render(row)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

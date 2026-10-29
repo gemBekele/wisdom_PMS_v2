@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
-import { isAdmin, isAreaManager, isBranchManager, isSupervisor } from '../middleware/rbac.js';
+import { isAdmin, isAreaManager, isBranchManager, isSupervisor, isManagerOrAbove } from '../middleware/rbac.js';
 import {
   getStaffNpl,
   getBranchNpl,
@@ -31,9 +31,9 @@ router.get('/hq', protect, isAdmin, getHqNpl);
 router.get('/team-alerts', protect, isSupervisor, getTeamCollectionAlerts);
 
 // Loan schedules
-router.get('/schedules/:accountId', protect, getLoanSchedule);
-router.post('/schedules/:accountId/generate', protect, generateLoanSchedules);
-router.put('/schedules/:id/pay', protect, markInstallmentPaid);
+router.get('/schedules/:accountId', protect, isBranchManager, getLoanSchedule);
+router.post('/schedules/:accountId/generate', protect, isManagerOrAbove, generateLoanSchedules);
+router.put('/schedules/:id/pay', protect, isManagerOrAbove, markInstallmentPaid);
 
 // NPL snapshot
 router.post('/snapshot', protect, isBranchManager, triggerNplSnapshot);

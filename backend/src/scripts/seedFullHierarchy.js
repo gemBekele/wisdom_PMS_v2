@@ -50,12 +50,12 @@ async function main() {
 
     // 4. Create Admin User
     const admin = await prisma.user.upsert({
-        where: { email: 'admin@sako.com' },
+        where: { email: 'admin@wisdomsaccos.com' },
         update: {},
         create: {
             employeeId: 'ADMIN001',
             name: 'System Administrator',
-            email: 'admin@sako.com',
+            email: 'admin@wisdomsaccos.com',
             password: adminPassword,
             role: 'admin',
             position: 'Accountant', // Dummy for admin schema requirement

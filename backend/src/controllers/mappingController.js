@@ -141,19 +141,39 @@ export const updateMapping = asyncHandler(async (req, res) => {
     });
   }
 
-  const updateData = { ...req.body };
-  if (updateData.accountType) updateData.accountType = ACCOUNT_TYPE_TO_ENUM[updateData.accountType] || updateData.accountType;
-  if (updateData.payment_frequency || updateData.paymentFrequency) {
-    updateData.payment_frequency = PAYMENT_FREQUENCY_MAP[updateData.payment_frequency || updateData.paymentFrequency] || null;
+  if (req.user.role !== 'admin' && req.user.branchId && existingMapping.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Mapping is outside your branch' });
   }
-  if (updateData.mappedTo) {
-    updateData.mappedToId = updateData.mappedTo;
-    delete updateData.mappedTo;
+
+  const updateData = {};
+  const safeFields = ['customerName', 'product', 'phoneNumber', 'notes', 'status', 'loan_principal', 'loan_maturity_date', 'loan_disbursement_date', 'next_payment_date', 'interest_rate'];
+  for (const field of safeFields) {
+    if (req.body[field] !== undefined) updateData[field] = req.body[field];
   }
-  if (updateData.branchId) {
-    updateData.branchId = updateData.branchId;
+
+  if (req.body.accountType) updateData.accountType = ACCOUNT_TYPE_TO_ENUM[req.body.accountType] || req.body.accountType;
+  if (req.body.payment_frequency || req.body.paymentFrequency) {
+    updateData.payment_frequency = PAYMENT_FREQUENCY_MAP[req.body.payment_frequency || req.body.paymentFrequency] || null;
   }
-  delete updateData.paymentFrequency;
+
+  const mappedTo = req.body.mappedTo || req.body.mappedToId;
+  if (mappedTo !== undefined) {
+    if (mappedTo === null) {
+      updateData.mappedToId = null;
+    } else {
+      const assignee = await prisma.user.findUnique({
+        where: { id: mappedTo },
+        select: { id: true, branchId: true, isActive: true, role: true },
+      });
+      if (!assignee || !assignee.isActive) {
+        return res.status(400).json({ success: false, message: 'Assigned user not found or inactive' });
+      }
+      if (req.user.role !== 'admin' && existingMapping.branchId && assignee.branchId !== existingMapping.branchId) {
+        return res.status(400).json({ success: false, message: 'Assigned user must belong to the same branch' });
+      }
+      updateData.mappedToId = assignee.id;
+    }
+  }
 
   const mapping = await prisma.accountMapping.update({
     where: { id: req.params.id },

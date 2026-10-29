@@ -11,8 +11,8 @@ import { upload } from '../utils/fileUpload.js';
 const router = express.Router();
 
 router.post('/upload', protect, isManagerOrAbove, upload.single('cbsFile'), uploadCBS);
-router.get('/', protect, getCBSValidations);
-router.put('/:id/resolve/:discrepancyId', protect, resolveDiscrepancy);
+router.get('/', protect, isManagerOrAbove, getCBSValidations);
+router.put('/:id/resolve/:discrepancyId', protect, isManagerOrAbove, resolveDiscrepancy);
 
 export default router;
 

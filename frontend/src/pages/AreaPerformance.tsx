@@ -128,7 +128,7 @@ export function AreaPerformance() {
                   formatter={(val: number) => [`${val}%`, 'Achievement']}
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 />
-                <Bar dataKey="achievement" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="achievement" fill="#ed8722" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

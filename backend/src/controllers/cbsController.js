@@ -528,6 +528,24 @@ export const getCBSValidations = asyncHandler(async (req, res) => {
 // @access  Private
 export const resolveDiscrepancy = asyncHandler(async (req, res) => {
   const { resolutionNotes } = req.body;
+
+  if (!resolutionNotes || !String(resolutionNotes).trim()) {
+    return res.status(400).json({ success: false, message: 'Resolution notes are required' });
+  }
+
+  const existing = await prisma.cBSDiscrepancy.findUnique({
+    where: { id: req.params.discrepancyId },
+    include: { validation: { select: { id: true, branchId: true } } },
+  });
+
+  if (!existing || existing.validationId !== req.params.id) {
+    return res.status(404).json({ success: false, message: 'Discrepancy not found for this validation' });
+  }
+
+  if (req.user.role !== 'admin' && req.user.branchId && existing.validation.branchId !== req.user.branchId) {
+    return res.status(403).json({ success: false, message: 'Discrepancy is outside your branch' });
+  }
+
   const discrepancy = await prisma.cBSDiscrepancy.update({
     where: { id: req.params.discrepancyId },
     data: {
@@ -537,6 +555,16 @@ export const resolveDiscrepancy = asyncHandler(async (req, res) => {
       resolutionNotes
     }
   });
+
+  await logAudit(
+    req.user.id,
+    'CBS Validation',
+    'CBS',
+    existing.validationId,
+    'CBS Discrepancy',
+    `Resolved discrepancy ${discrepancy.id}`,
+    req
+  );
 
   res.status(200).json({ success: true, data: { ...discrepancy, _id: discrepancy.id } });
 });
