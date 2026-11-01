@@ -141,6 +141,7 @@ app.get('/api/health', (req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Start server after database connection
 const startServer = async () => {
@@ -164,7 +165,7 @@ const startServer = async () => {
     });
     
     // Start server only after DB connection succeeds
-    app.listen(PORT, () => {
+    app.listen(PORT, HOST, () => {
       console.log(`\n🚀 Server running in ${process.env.NODE_ENV || 'development'} mode`);
       console.log(`📡 API available at http://localhost:${PORT}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/api/health\n`);
