@@ -7,6 +7,9 @@ import { useUser } from '@/contexts/UserContext';
 import { mapBackendRoleToFrontend } from '@/lib/roleMapper';
 import { AlertCircle, Lock, Mail } from 'lucide-react';
 
+const SHOW_DEMO_ACCOUNTS =
+  import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_CREDENTIALS === 'true';
+
 const DEMO_ACCOUNTS = [
   { role: 'admin', label: 'Administrator', email: 'admin@wisdomsaccos.com', password: 'admin123', position: 'Branch Manager' },
   { role: 'areaManager', label: 'Area Manager', email: 'areamanager@wisdomsaccos.com', password: 'area123', position: 'Area Manager' },
@@ -193,10 +196,10 @@ export function Login() {
                   {loading ? 'Logging in...' : 'Login'}
                 </Button>
 
-                {import.meta.env.DEV && (
+                {SHOW_DEMO_ACCOUNTS && (
                   <div className="border-t border-line pt-4">
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-stone">
-                      Demo accounts — click to fill (development only)
+                      Demo accounts — click to fill
                     </p>
                     <div className="grid grid-cols-1 gap-1.5">
                       {DEMO_ACCOUNTS.map(account => (
