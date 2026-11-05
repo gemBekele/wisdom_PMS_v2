@@ -2,7 +2,7 @@ import prisma from '../config/database.js';
 import { KPI_CATEGORY_TO_ENUM, TASK_TYPE_TO_ENUM, CBS_PRODUCT_TO_CATEGORY, PRODUCT_CATEGORY_TO_KPI } from './prismaHelpers.js';
 import { getPeriodStart, getPeriodEnd } from './periodUtils.js';
 
-const KPI_TASK_TYPES = {
+export const KPI_TASK_TYPES = {
   Deposit_Mobilization: ['Deposit_Mobilization', 'Loan_Saving_Deposit', 'Michu_Current_Saving', 'Gihon_Regular_Saving', 'Mothers_Saving', 'Young_Womens_Saving', 'Elders_Saving', 'Children_Saving', 'Fixed_Time_Deposit', 'Premium_Saving_Deposit', 'Special_Saving', 'Segment_Deposit', 'Wadiah_IFB_Deposit'],
   New_Member_Registration: ['New_Member_Registration'],
   New_Account_Opening: ['New_Account_Opening'],

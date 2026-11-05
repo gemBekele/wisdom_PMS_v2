@@ -158,6 +158,7 @@ async function main() {
   // Plans
   const planDefs = [
     { kpi_category: 'Deposit_Mobilization', target_value: 250000 },
+    { kpi_category: 'New_Account_Opening', target_value: 500, target_count: 500 },
     { kpi_category: 'Collection_Rate', target_value: 95 },
     { kpi_category: 'Portfolio_Quality', target_value: 90 },
   ];
@@ -214,10 +215,15 @@ async function main() {
     const current = june + growth;
     const product = ACCOUNT_PRODUCTS[i % ACCOUNT_PRODUCTS.length];
     const accountNumber = `WD${100000 + i}`;
+    const openedDaysAgo = i < 2 ? 0 : i < 4 ? 1 : i < 8 ? 7 : (i * 3) % 90;
+    const openedAt = new Date();
+    openedAt.setHours(12, 0, 0, 0);
+    openedAt.setDate(openedAt.getDate() - openedDaysAgo);
     const account = await prisma.accountMapping.create({
       data: {
         accountNumber,
         customerName: CUSTOMERS[i],
+        openedAt,
         accountType: i % 7 === 0 ? 'Current' : 'Savings',
         balance: current,
         current_balance: current,
@@ -363,6 +369,7 @@ async function main() {
         mappedById: branchManager.id,
         branchId: branch.id,
         loan_principal: principal,
+        openedAt: new Date('2026-01-15'),
         loan_disbursement_date: new Date('2026-01-15'),
         loan_maturity_date: new Date('2026-12-15'),
         payment_frequency: 'Monthly',

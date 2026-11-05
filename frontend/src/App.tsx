@@ -2,15 +2,10 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { ConfigProvider } from './contexts/ConfigContext';
-import { mapBackendRoleToFrontend } from './lib/roleMapper';
 import { MainLayout } from './components/layout/MainLayout';
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
-const CEODashboard = lazy(() => import('./pages/CEODashboard').then(m => ({ default: m.CEODashboard })));
-const AreaManagerDashboard = lazy(() => import('./pages/AreaManagerDashboard').then(m => ({ default: m.AreaManagerDashboard })));
-const BranchManagerDashboard = lazy(() => import('./pages/BranchManagerDashboard').then(m => ({ default: m.BranchManagerDashboard })));
-const SupervisorDashboard = lazy(() => import('./pages/SupervisorDashboard').then(m => ({ default: m.SupervisorDashboard })));
-const StaffDashboard = lazy(() => import('./pages/StaffDashboard').then(m => ({ default: m.StaffDashboard })));
+const DailyStandingDashboard = lazy(() => import('./pages/DailyStandingDashboard').then(m => ({ default: m.DailyStandingDashboard })));
 const Tasks = lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
 const TaskEntryForm = lazy(() => import('./pages/TaskEntryForm').then(m => ({ default: m.TaskEntryForm })));
 const MappingManagement = lazy(() => import('./pages/MappingManagement').then(m => ({ default: m.MappingManagement })));
@@ -83,23 +78,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 }
 
 function DashboardRoute() {
-  const { role, user } = useUser();
-  const mappedRole = user?.role ? mapBackendRoleToFrontend(user.role) : role;
-
-  switch (mappedRole) {
-    case 'admin':
-      return <CEODashboard />;
-    case 'areaManager':
-      return <AreaManagerDashboard />;
-    case 'branchManager':
-      return <BranchManagerDashboard />;
-    case 'supervisor':
-      return <SupervisorDashboard />;
-    case 'staff':
-      return <StaffDashboard />;
-    default:
-      return <StaffDashboard />;
-  }
+  return <DailyStandingDashboard />;
 }
 
 function AppRoutes() {
@@ -107,11 +86,11 @@ function AppRoutes() {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/dashboard" element={<ProtectedRoute><DashboardRoute /></ProtectedRoute>} />
-      <Route path="/dashboard/hq" element={<ProtectedRoute allowedRoles={['admin']}><CEODashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/area" element={<ProtectedRoute allowedRoles={['areaManager']}><AreaManagerDashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/branch" element={<ProtectedRoute allowedRoles={['branchManager', 'supervisor']}><BranchManagerDashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/supervisor" element={<ProtectedRoute allowedRoles={['supervisor']}><SupervisorDashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/staff" element={<ProtectedRoute allowedRoles={['staff']}><StaffDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/hq" element={<ProtectedRoute allowedRoles={['admin']}><DailyStandingDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/area" element={<ProtectedRoute allowedRoles={['areaManager']}><DailyStandingDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/branch" element={<ProtectedRoute allowedRoles={['branchManager', 'supervisor']}><DailyStandingDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/supervisor" element={<ProtectedRoute allowedRoles={['supervisor']}><DailyStandingDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/staff" element={<ProtectedRoute allowedRoles={['staff']}><DailyStandingDashboard /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute allowedRoles={['staff', 'supervisor']}><Tasks /></ProtectedRoute>} />
       <Route path="/tasks/new" element={<ProtectedRoute allowedRoles={['staff', 'supervisor']}><TaskEntryForm /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

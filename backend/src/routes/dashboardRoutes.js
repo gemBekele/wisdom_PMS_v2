@@ -7,11 +7,13 @@ import {
   getSupervisorDashboard,
   getBranchOperations,
 } from '../controllers/dashboardController.js';
+import { getDailyStanding } from '../controllers/dailyStandingController.js';
 import { protect } from '../middleware/auth.js';
 import { isAdmin, isAreaManager, isBranchManager, isSupervisor, isStaff } from '../middleware/rbac.js';
 
 const router = express.Router();
 
+router.get('/daily-standing', protect, getDailyStanding);
 router.get('/hq', protect, isAdmin, getHQDashboard);
 router.get('/area', protect, isAreaManager, getAreaDashboard);
 router.get('/branch', protect, isBranchManager, getBranchDashboard);

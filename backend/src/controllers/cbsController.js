@@ -21,6 +21,9 @@ const updateAccountBalances = async (cbsData, branchId, validationDate) => {
     const currentBalance = parseFloat(record.balance || record.Balance || record.current_balance || 0);
     const transactionDate = record.transactionDate || record['Transaction Date'] || validationDate;
     const productName = String(record.product || record.Product || record.productName || record['Product Name'] || '').trim();
+    const openedAtRaw = record.openedAt || record['Account Open Date'] || record['Date Opened'] || record['Opened Date'] || record.openingDate;
+    const openedAt = openedAtRaw ? new Date(openedAtRaw) : null;
+    const validOpenedAt = openedAt && !Number.isNaN(openedAt.getTime()) ? openedAt : null;
 
     if (!accountNumber) continue;
 
@@ -30,6 +33,7 @@ const updateAccountBalances = async (cbsData, branchId, validationDate) => {
       active_status: new Date(transactionDate) >= fifteenDaysAgo,
     };
     if (productName) updateData.product = productName;
+    if (validOpenedAt) updateData.openedAt = validOpenedAt;
 
     const createData = {
       accountNumber,
@@ -42,6 +46,7 @@ const updateAccountBalances = async (cbsData, branchId, validationDate) => {
       status: 'Active',
     };
     if (productName) createData.product = productName;
+    if (validOpenedAt) createData.openedAt = validOpenedAt;
 
     const accountMapping = await prisma.accountMapping.upsert({
       where: { accountNumber },
@@ -503,6 +508,13 @@ export const uploadCBS = asyncHandler(async (req, res) => {
         validationRate: vResult.totalRecords > 0 ? (vResult.matchedRecords / vResult.totalRecords) * 100 : 0,
       }
     });
+
+    try {
+      const { captureDailyKpiSnapshots } = await import('../utils/kpiSnapshotService.js');
+      await captureDailyKpiSnapshots(updatedValidation.validationDate || validation.validationDate, branch.id, 'CBS');
+    } catch (snapshotError) {
+      console.error('[CBS] Snapshot capture failed:', snapshotError.message);
+    }
 
     fs.unlinkSync(req.file.path);
 

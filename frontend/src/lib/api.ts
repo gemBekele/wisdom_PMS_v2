@@ -478,6 +478,19 @@ export const productMappingAPI = {
 
 // Dashboard API
 export const dashboardAPI = {
+  getDailyStanding: async (params: Record<string, any> = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      if (Array.isArray(value)) {
+        if (value.length > 0) qs.set(key, value.join(','));
+      } else {
+        qs.set(key, String(value));
+      }
+    });
+    const query = qs.toString();
+    return apiRequest(`/dashboard/daily-standing${query ? `?${query}` : ''}`);
+  },
   getHQ: async (category?: string) => {
     const qs = category ? `?category=${encodeURIComponent(category)}` : '';
     return apiRequest(`/dashboard/hq${qs}`);
