@@ -26,11 +26,11 @@ const DEFAULT_KPI_GROUPS = [
   { key: 'Portfolio_Quality', name: 'Portfolio Quality' },
 ];
 
-const localToday = () => {
-  const d = new Date();
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+const localDateString = (date: Date) => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
 };
+const localToday = () => localDateString(new Date());
 
 const parseList = (value: string | null) => (value ? value.split(',').map(v => v.trim()).filter(Boolean) : []);
 
@@ -384,6 +384,16 @@ export function DailyStandingDashboard() {
             <Button variant="ghost" size="sm" onClick={resetAll}>Reset</Button>
           </div>
 
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-stone mr-1">Quick views</span>
+            <button type="button" onClick={() => setFilters(prev => ({ ...prev, asOfDate: localToday(), comparison: 'yesterday', trendDays: 14 }))} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">Today</button>
+            <button type="button" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 1); setFilters(prev => ({ ...prev, asOfDate: localDateString(d), comparison: 'yesterday', trendDays: 14 })); }} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">Yesterday</button>
+            <button type="button" onClick={() => setFilters(prev => ({ ...prev, asOfDate: localToday(), comparison: 'previous_week', trendDays: 7 }))} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">This week</button>
+            <button type="button" onClick={() => setFilters(prev => ({ ...prev, asOfDate: localToday(), comparison: 'month_start', trendDays: 30 }))} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">This month</button>
+            <button type="button" onClick={() => setFilters(prev => ({ ...prev, asOfDate: localToday(), comparison: 'month_start', trendDays: 90 }))} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">Cycle-to-date</button>
+            <button type="button" onClick={() => setFilters(prev => ({ ...prev, trendDays: 30 }))} className="px-2 py-0.5 text-[11px] font-semibold border border-line bg-white text-stone hover:bg-ivory rounded-sm">Last 30 days</button>
+          </div>
+
           <div className="flex flex-wrap gap-1.5">
             <button type="button" onClick={() => updateFilter('kpiGroups', [])}
               className={`px-2.5 py-1 text-[11px] font-semibold rounded-sm border ${allKpiSelected ? 'bg-primary-900 text-white border-primary-900' : 'bg-white text-stone border-line hover:bg-ivory'}`}>
@@ -481,7 +491,7 @@ export function DailyStandingDashboard() {
         <SummaryCard label="Growth vs June" value={fmtMoney(deposit.growth)} sub={`${fmtPct(deposit.planPct)} of plan`} icon={TrendingUp} tone="green" />
         <SummaryCard label="Plan achieved" value={`${Math.min(100, Number(deposit.planPct) || 0).toFixed(0)}%`} sub={`${fmtPct(deposit.planPct)} of target · ${data?.cycleDay || 1}/${data?.cycleDays || 365} days`} icon={Target} progress={deposit.planPct} />
         <SummaryCard label={filters.comparison === 'yesterday' ? 'Yesterday → today' : 'Comparison change'} value={deposit.dayChange === null || deposit.dayChange === undefined ? 'Pending' : fmtDelta(deposit.dayChange)} sub={deposit.yesterday === null ? 'No snapshot yet' : `From ${fmtMoney(deposit.yesterday)}`} icon={(deposit.dayChange || 0) < 0 ? TrendingDown : TrendingUp} tone={(deposit.dayChange || 0) < 0 ? 'red' : 'green'} />
-        <SummaryCard label="New accounts today" value={fmtCount(newAccounts.today)} sub={`Yesterday ${fmtCount(newAccounts.yesterday)} · Target ${fmtCount(newAccounts.dailyTarget)}`} icon={Users} tone="orange" />
+        <SummaryCard label="New accounts today" value={fmtCount(newAccounts.today)} sub={`Yesterday ${fmtCount(newAccounts.yesterday)} · Target ${fmtCount(Math.round(newAccounts.dailyTarget || 0))}`} icon={Users} tone="orange" />
         <SummaryCard label="Active staff" value={`${fmtCount(activeStaff.submitted)} / ${fmtCount(activeStaff.total)}`} sub="Submitted today" icon={CheckCircle2} progress={activeStaff.total ? (activeStaff.submitted / activeStaff.total) * 100 : 0} />
       </div>
 

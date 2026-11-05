@@ -79,13 +79,14 @@ const resolveFilters = async (req) => {
   }
 
   const queryStaffIds = parseList(req.query.staffIds);
+  const staffFilterActive = queryStaffIds.length > 0;
   if (queryStaffIds.length) staff = staff.filter(s => queryStaffIds.includes(s.id));
   if (search) {
     staff = staff.filter(s => s.name.toLowerCase().includes(search) || String(s.position || '').toLowerCase().includes(search));
   }
 
   const scope = role === 'admin' ? 'hq' : role === 'areaManager' ? 'area' : role === 'staff' ? 'staff' : role === 'supervisor' ? 'supervisor' : 'branch';
-  return { role, scope, branches: allowed, branchIds, staff, staffIds: staff.map(s => s.id) };
+  return { role, scope, branches: allowed, branchIds, staff, staffIds: staff.map(s => s.id), staffFilterActive };
 };
 
 const getDailyTarget = (planInfo, asOf) => {
@@ -168,13 +169,14 @@ const resolveComparisonDate = (asOf, comparison) => {
   return addDays(asOf, -1);
 };
 
-const getDepositStanding = async ({ branchIds, staffIds, scope, asOf, comparisonDate, products }) => {
+const getDepositStanding = async ({ branchIds, staffIds, scope, staffFilterActive, asOf, comparisonDate, products }) => {
+  const restrictToStaff = scope === 'staff' || scope === 'supervisor' || staffFilterActive;
   const where = {
     branchId: { in: branchIds },
     status: 'Active',
     accountType: { not: 'Loan' },
     ...(products.length ? { product: { in: products } } : {}),
-    ...(scope === 'staff' || scope === 'supervisor' ? { mappedToId: { in: staffIds } } : {}),
+    ...(restrictToStaff ? { mappedToId: { in: staffIds } } : {}),
   };
 
   const totals = await prisma.accountMapping.aggregate({
@@ -221,12 +223,13 @@ const getDepositStanding = async ({ branchIds, staffIds, scope, asOf, comparison
   };
 };
 
-const getNewAccountStanding = async ({ branchIds, staffIds, scope, asOf, comparisonDate, periodStart, products }) => {
+const getNewAccountStanding = async ({ branchIds, staffIds, scope, staffFilterActive, asOf, comparisonDate, periodStart, products }) => {
+  const restrictToStaff = scope === 'staff' || scope === 'supervisor' || staffFilterActive;
   const baseWhere = {
     branchId: { in: branchIds },
     openedAt: { not: null },
     ...(products.length ? { product: { in: products } } : {}),
-    ...(scope === 'staff' || scope === 'supervisor' ? { mappedToId: { in: staffIds } } : {}),
+    ...(restrictToStaff ? { mappedToId: { in: staffIds } } : {}),
   };
   const todayEnd = addDays(asOf, 1);
   const comparisonEnd = addDays(comparisonDate, 1);
@@ -240,12 +243,13 @@ const getNewAccountStanding = async ({ branchIds, staffIds, scope, asOf, compari
   return { today, yesterday, cycleTotal };
 };
 
-const getTaskMetrics = async ({ branchIds, staffIds, scope, asOf, periodStart, periodEnd }) => {
+const getTaskMetrics = async ({ branchIds, staffIds, scope, staffFilterActive, asOf, periodStart, periodEnd }) => {
+  const restrictToStaff = scope === 'staff' || scope === 'supervisor' || staffFilterActive;
   const where = {
     branchId: { in: branchIds },
     approvalStatus: 'Approved',
     taskDate: { gte: periodStart, lte: periodEnd },
-    ...(scope === 'staff' || scope === 'supervisor' ? { submittedById: { in: staffIds } } : {}),
+    ...(restrictToStaff ? { submittedById: { in: staffIds } } : {}),
   };
   const tasks = await prisma.dailyTask.findMany({
     where,
@@ -273,11 +277,12 @@ const getTaskMetrics = async ({ branchIds, staffIds, scope, asOf, periodStart, p
   return metrics;
 };
 
-const getPipeline = async ({ branchIds, staffIds, scope, periodStart, periodEnd }) => {
+const getPipeline = async ({ branchIds, staffIds, scope, staffFilterActive, periodStart, periodEnd }) => {
+  const restrictToStaff = scope === 'staff' || scope === 'supervisor' || staffFilterActive;
   const where = {
     branchId: { in: branchIds },
     taskDate: { gte: periodStart, lte: periodEnd },
-    ...(scope === 'staff' || scope === 'supervisor' ? { submittedById: { in: staffIds } } : {}),
+    ...(restrictToStaff ? { submittedById: { in: staffIds } } : {}),
   };
   const grouped = await prisma.dailyTask.groupBy({
     by: ['approvalStatus'],
@@ -320,16 +325,17 @@ const getTrend = async ({ branchIds, asOf, trendDays }) => {
   return trend;
 };
 
-const getRankings = async ({ scope, branchIds, staffIds, branches, staff, asOf, period }) => {
+const getRankings = async ({ scope, branchIds, staffIds, staffFilterActive, branches, staff, asOf, period }) => {
+  const restrictToStaff = scope === 'staff' || scope === 'supervisor' || staffFilterActive;
   const depositWhere = {
     branchId: { in: branchIds },
     status: 'Active',
     accountType: { not: 'Loan' },
-    ...(scope === 'staff' || scope === 'supervisor' ? { mappedToId: { in: staffIds } } : {}),
+    ...(restrictToStaff ? { mappedToId: { in: staffIds } } : {}),
   };
 
   const planMap = await getPlanTargets({ scope, branchIds, staffIds, period });
-  const byBranch = scope === 'hq' || scope === 'area';
+  const byBranch = (scope === 'hq' || scope === 'area') && !staffFilterActive;
   const grouped = await prisma.accountMapping.groupBy({
     by: [byBranch ? 'branchId' : 'mappedToId'],
     where: depositWhere,
@@ -445,7 +451,9 @@ export const getDailyStanding = asyncHandler(async (req, res) => {
     }
 
     if (COUNT_KPIS.has(kpi) || kpi === 'New_Account_Opening') planTarget = Math.round(planTarget);
-    const growth = current - (yesterday ?? 0);
+    const isDeposit = DEPOSIT_KPIS.has(kpi);
+    const growth = isDeposit ? current - (deposit.june || 0) : current;
+    const dayChange = yesterday === null ? null : isDeposit ? current - yesterday : today - yesterday;
     const planPct = planTarget > 0 ? round((current / planTarget) * 100) : 0;
     const todayPct = dailyTarget > 0 ? round((Math.max(0, today) / dailyTarget) * 100) : 0;
     const expectedPct = cycleDays > 0 ? round((cycleDay / cycleDays) * 100) : 0;
@@ -459,7 +467,7 @@ export const getDailyStanding = asyncHandler(async (req, res) => {
       june: DEPOSIT_KPIS.has(kpi) ? deposit.june : null,
       yesterday,
       today,
-      dayChange: yesterday === null ? null : current - yesterday,
+      dayChange,
       growth,
       planTarget,
       planPct,
@@ -510,7 +518,7 @@ export const getDailyStanding = asyncHandler(async (req, res) => {
   const recentTasks = await prisma.dailyTask.findMany({
     where: {
       branchId: { in: filters.branchIds },
-      ...(filters.scope === 'staff' || filters.scope === 'supervisor' ? { submittedById: { in: filters.staffIds } } : {}),
+      ...(filters.scope === 'staff' || filters.scope === 'supervisor' || filters.staffFilterActive ? { submittedById: { in: filters.staffIds } } : {}),
     },
     orderBy: { taskDate: 'desc' },
     take: 8,
