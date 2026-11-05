@@ -269,14 +269,16 @@ export function DailyStandingDashboard() {
   const [showAllGroups, setShowAllGroups] = useState(false);
   const [now, setNow] = useState(Date.now());
   const filtersRef = useRef(filters);
+  const hasDataRef = useRef(false);
   const requestIdRef = useRef(0);
 
   useEffect(() => { filtersRef.current = filters; }, [filters]);
+  useEffect(() => { hasDataRef.current = !!data; }, [data]);
 
   const fetchData = useCallback(async (silent = false) => {
     const requestId = ++requestIdRef.current;
     if (!silent) {
-      if (data) setRefreshing(true);
+      if (hasDataRef.current) setRefreshing(true);
       else setLoading(true);
     }
     setError('');
@@ -296,7 +298,7 @@ export function DailyStandingDashboard() {
         setRefreshing(false);
       }
     }
-  }, [data]);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchData(), 300);
