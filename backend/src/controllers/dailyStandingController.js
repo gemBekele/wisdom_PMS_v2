@@ -22,10 +22,17 @@ const DEPOSIT_KPIS = new Set(['Deposit_Mobilization']);
 const COUNT_KPIS = new Set(['New_Account_Opening', 'New_Member_Registration', 'Share_Capital_Growth', 'Account_Productivity', 'Mobile_Banking_Users', 'Merchant_POS_Growth', 'Billers_Recruitment', 'Internal_Operations']);
 const PERCENT_KPIS = new Set(['Collection_Rate', 'Portfolio_Quality']);
 
+const ADDIS_OFFSET_MS = 3 * 60 * 60 * 1000;
 const startOfUtcDay = (value = new Date()) => {
   const d = new Date(value);
   d.setUTCHours(0, 0, 0, 0);
   return d;
+};
+const addisDateString = (value = new Date()) => {
+  const local = new Date(new Date(value).getTime() + ADDIS_OFFSET_MS);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()))
+    .toISOString()
+    .slice(0, 10);
 };
 const addDays = (date, days) => {
   const d = new Date(date);
@@ -368,7 +375,7 @@ const getRankings = async ({ scope, branchIds, staffIds, staffFilterActive, bran
 };
 
 export const getDailyStanding = asyncHandler(async (req, res) => {
-  const asOf = req.query.asOfDate ? startOfUtcDay(req.query.asOfDate) : startOfUtcDay(new Date());
+  const asOf = req.query.asOfDate ? startOfUtcDay(req.query.asOfDate) : startOfUtcDay(addisDateString(new Date()));
   const period = normalizePeriod(req.query.period) || await getActivePeriod();
   const periodStart = getPeriodStart(period);
   const periodEnd = getPeriodEnd(period);

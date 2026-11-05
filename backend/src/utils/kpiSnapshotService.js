@@ -1,9 +1,12 @@
 import prisma from '../config/database.js';
 
-const startOfUtcDay = (value = new Date()) => {
-  const date = new Date(value);
-  date.setUTCHours(0, 0, 0, 0);
-  return date;
+const ADDIS_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+// Ethiopia is UTC+3 year-round. Store each snapshot under the UTC midnight of
+// the Addis Ababa calendar date so the dashboard's YYYY-MM-DD filters match.
+const startOfAddisDay = (value = new Date()) => {
+  const local = new Date(new Date(value).getTime() + ADDIS_OFFSET_MS);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()));
 };
 
 const addDays = (date, days) => {
@@ -20,7 +23,7 @@ const sum = (rows, key) => rows.reduce((total, row) => total + (Number(row[key])
  * AccountMapping.openedAt (the CBS account-opening date).
  */
 export const captureDailyKpiSnapshots = async (date = new Date(), branchId = null, source = 'CRON') => {
-  const snapshotDate = startOfUtcDay(date);
+  const snapshotDate = startOfAddisDay(date);
   const nextDate = addDays(snapshotDate, 1);
 
   const branches = branchId
